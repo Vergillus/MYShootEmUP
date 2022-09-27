@@ -10,6 +10,8 @@ class UFloatingPawnMovement;
 class UCapsuleComponent;
 class USpringArmComponent;
 class UCameraComponent;
+class AMYCharacterBase;
+class UHealthComponent;
 
 UCLASS()
 class MYSHOOTEMUP_API AMYPawn : public APawn
@@ -24,6 +26,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+
 	UPROPERTY(EditAnywhere, Category= "Movement")
 	UFloatingPawnMovement* PawnMovementComp;
 
@@ -36,10 +39,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	UCameraComponent* CameraComp;
 
-	UPROPERTY(EditDefaultsOnly, Category= "Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Movement")
 	USceneComponent* RotParentByMouse;
 
-	UPROPERTY(EditDefaultsOnly, Category= "Movement")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Movement")
 	USceneComponent* SquadParent;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -68,17 +71,29 @@ protected:
 	float CharacterRotLerpVal;
 	bool bCanRotateCharacters;
 
+#pragma  region Grenade Related 
 	bool bCanThrowGrenade;
 	FVector2d CachedMousePos;
 
 	void GrenadeThrowStart();
+	void ThrowGrenade();
 	void GrenadeThrowEnd();
 
+#pragma endregion
+
+	bool bCanFire;
+	
+	void StartFire();
+	void EndFire();
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<UChildActorComponent*> SquadMembers;	
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input //
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 };

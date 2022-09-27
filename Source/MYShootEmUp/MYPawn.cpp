@@ -3,6 +3,8 @@
 
 #include "MYPawn.h"
 
+#include "HealthComponent.h"
+#include "MYCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -15,7 +17,8 @@
 AMYPawn::AMYPawn() :
 	CharacterRotationDuration(0.25f),
 	bCanRotateCharacters(true),
-	bCanThrowGrenade(false)
+	bCanThrowGrenade(false),
+	bCanFire(false)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -38,7 +41,7 @@ AMYPawn::AMYPawn() :
 	RotParentByMouse->SetupAttachment(RootComponent);
 
 	SquadParent = CreateDefaultSubobject<USceneComponent>(TEXT("Squad Parent"));
-	SquadParent->SetupAttachment(RotParentByMouse);
+	SquadParent->SetupAttachment(RotParentByMouse);	
 
 	constexpr int SquadMemberCnt = 4;
 	
@@ -49,8 +52,23 @@ AMYPawn::AMYPawn() :
         if (UStaticMeshComponent* SceneComp = CreateDefaultSubobject<UStaticMeshComponent>(FName(*SocketName)))
         {
 	        SceneComp->SetupAttachment(SquadParent);
+        	SceneComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         	SquadMemberPositions.Add(SceneComp);
         }
+    }	
+
+    for (int i = 0; i < SquadMemberCnt; ++i)
+    {
+    	SocketName = "Character_" + FString::FromInt(i);
+	    if (UChildActorComponent* ChildActorComponent = CreateDefaultSubobject<UChildActorComponent>(FName(*SocketName)))
+	    {
+	    	ChildActorComponent->SetupAttachment(SquadMemberPositions[i]);
+	    	ChildActorComponent->SetUsingAbsoluteScale(true);	 
+	    	ChildActorComponent->SetRelativeLocation(FVector::UpVector * 90);
+	    	ChildActorComponent->CreateChildActor();
+
+	    	SquadMembers.Add(ChildActorComponent);
+	    }
     }
 
 	PawnMovementComp = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement Comp"));
@@ -108,6 +126,9 @@ void AMYPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAction("RotateCharacter", IE_Pressed, this,&AMYPawn::RotateSquadMembers);
 	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this,&AMYPawn::GrenadeThrowStart);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMYPawn::StartFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMYPawn::EndFire);
 
 }
 
@@ -181,6 +202,11 @@ void AMYPawn::GrenadeThrowStart()
 	}
 }
 
+void AMYPawn::ThrowGrenade()
+{
+		
+}
+
 void AMYPawn::GrenadeThrowEnd()
 {
 	bCanThrowGrenade = false;
@@ -191,4 +217,20 @@ void AMYPawn::GrenadeThrowEnd()
 	}				
 
 	SpringArm->SetRelativeLocation(FVector::Zero());
+}
+
+void AMYPawn::StartFire()
+{
+	if (bCanThrowGrenade)
+	{
+		ThrowGrenade();
+		return;
+	}
+	
+	bCanFire = true;
+}
+
+void AMYPawn::EndFire()
+{
+	bCanFire = false;
 }
