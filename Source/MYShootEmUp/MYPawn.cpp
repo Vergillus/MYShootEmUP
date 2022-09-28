@@ -18,7 +18,8 @@ AMYPawn::AMYPawn() :
 	CharacterRotationDuration(0.25f),
 	bCanRotateCharacters(true),
 	bCanThrowGrenade(false),
-	bCanFire(false)
+	bCanFire(false),
+	GrenadeThrowHeight(2000)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -106,12 +107,14 @@ void AMYPawn::Tick(float DeltaTime)
 
 	if (bCanThrowGrenade)
 	{
-		DrawDebugCircle(GetWorld(),GetActorLocation(),1500,16,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
-		DrawDebugSphere(GetWorld(),SpringArm->GetRelativeLocation(), 15.0f, 6, FColor::Magenta);
+		DrawDebugCircle(GetWorld(),GetActorLocation(),1500,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
+//		DrawDebugSphere(GetWorld(),SpringArm->GetRelativeLocation(), 15.0f, 6, FColor::Magenta);
 
 		FVector SpringArmNewPos = FMath::Lerp(SpringArm->GetRelativeLocation(), LinePlaneIntersectionPoint, DeltaTime * 0.5f);
 		SpringArmNewPos = SpringArmNewPos.GetClampedToSize(0,1500);
 		SpringArm->SetRelativeLocation(SpringArmNewPos);
+
+		VisualizeGrandeTrajectory(GetActorLocation(), SpringArm->GetComponentLocation());
 	}
 	
 }
@@ -217,6 +220,34 @@ void AMYPawn::GrenadeThrowEnd()
 	}				
 
 	SpringArm->SetRelativeLocation(FVector::Zero());
+}
+
+void AMYPawn::VisualizeGrandeTrajectory(const FVector StartPos, const FVector EndPos)
+{
+	FVector MidPos =  (EndPos + StartPos) * 0.5f;
+	MidPos.Z += GrenadeThrowHeight;
+	DrawDebugSphere(GetWorld(),MidPos,15,8,FColor::Black);
+
+	TArray<FVector> Positions;
+	for (float t = 0.0f; t < 1.0f; t += 0.1f)
+	{
+		FVector P1 = FMath::Lerp(StartPos,MidPos, t);
+		FVector P2 = FMath::Lerp(P1,EndPos, t);
+		Positions.Add(P2); 	
+	}
+
+	for (int i = 0; i < Positions.Num() - 1; ++i)
+	{
+		FVector Pos1 = Positions[i];
+		FVector Pos2 = Positions[i + 1];
+		
+		DrawDebugSphere(GetWorld(),Pos1,10,8,FColor::Green);
+		DrawDebugLine(GetWorld(),Pos1,Pos2,FColor::Red);
+	}
+	DrawDebugSphere(GetWorld(),Positions[Positions.Num() -1],10,8,FColor::Green);
+	DrawDebugLine(GetWorld(),Positions[Positions.Num() -1],EndPos,FColor::Red);
+
+	DrawDebugCircle(GetWorld(),EndPos,300,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
 }
 
 void AMYPawn::StartFire()

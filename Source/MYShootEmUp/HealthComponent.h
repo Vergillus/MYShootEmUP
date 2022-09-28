@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "HealthComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnReceiveHit,AActor*, Instigator, float, MaxHealth, float, CurrentHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnHealthChanged,AActor*, Instigator, float, MaxHealth, float, CurrentHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -16,7 +16,7 @@ class MYSHOOTEMUP_API UHealthComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UHealthComponent();
+	UHealthComponent();	
 
 protected:	
 
@@ -28,10 +28,13 @@ protected:
 
 public:
 
-	void DamageHealth(AActor* Instigator,float Damage);
+	UFUNCTION(BlueprintCallable)
+	void DamageHealth(AActor* Instigator, const float Damage);
+	
+	void Heal(const float Amount);
 
 	UPROPERTY(BlueprintAssignable)
-	FOnReceiveHit OnReceiveHit;
+	FOnHealthChanged OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnDeath OnDeath;

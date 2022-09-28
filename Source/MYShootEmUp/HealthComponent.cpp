@@ -15,19 +15,32 @@ UHealthComponent::UHealthComponent():
 	// ...
 }
 
-void UHealthComponent::DamageHealth(AActor* Instigator,float Damage)
+void UHealthComponent::DamageHealth(AActor* Instigator,const float Damage)
 {
 	if(Damage <= 0) return;
 
 	CurrentHealth -= Damage;
-	CurrentHealth = FMath::Clamp(CurrentHealth,0,MaxHealth);
+	CurrentHealth = FMath::Max(CurrentHealth,0);
 
-	OnReceiveHit.Broadcast(Instigator,MaxHealth,CurrentHealth);
+	UE_LOG(LogTemp,Warning,TEXT("Damage Received : Damage %f Health %f"), Damage, CurrentHealth);
+
+	OnHealthChanged.Broadcast(Instigator,MaxHealth,CurrentHealth);
 	
 	if (CurrentHealth <= 0)
 	{
 		OnDeath.Broadcast();		
 	}
+}
+
+void UHealthComponent::Heal(const float Amount)
+{
+	if (Amount <= 0) return;
+
+	CurrentHealth = FMath::Min(CurrentHealth + Amount, MaxHealth);
+
+	UE_LOG(LogTemp,Warning,TEXT("Healed : Heal Amount %f Health %f"), Amount, CurrentHealth);
+
+	OnHealthChanged.Broadcast(nullptr,MaxHealth,CurrentHealth);
 }
 
 

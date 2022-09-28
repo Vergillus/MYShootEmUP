@@ -75,10 +75,15 @@ protected:
 	bool bCanThrowGrenade;
 	FVector2d CachedMousePos;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grenade")
+	float GrenadeThrowHeight;
+
 	void GrenadeThrowStart();
 	void ThrowGrenade();
 	void GrenadeThrowEnd();
 
+	void VisualizeGrandeTrajectory(const FVector StartPos, const FVector EndPos);
+//
 #pragma endregion
 
 	bool bCanFire;
@@ -86,7 +91,7 @@ protected:
 	void StartFire();
 	void EndFire();
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<UChildActorComponent*> SquadMembers;	
 	
 public:	

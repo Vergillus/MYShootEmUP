@@ -13,7 +13,7 @@ AMYCharacterBase::AMYCharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Comp"));
-
+	HealthComponent->OnDeath.AddDynamic(this,&AMYCharacterBase::OnDeathHandler);
 }
 
 // Called when the game starts or when spawned
