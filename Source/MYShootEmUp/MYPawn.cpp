@@ -3,8 +3,6 @@
 
 #include "MYPawn.h"
 
-#include "HealthComponent.h"
-#include "MYCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -114,7 +112,9 @@ void AMYPawn::Tick(float DeltaTime)
 		SpringArmNewPos = SpringArmNewPos.GetClampedToSize(0,1500);
 		SpringArm->SetRelativeLocation(SpringArmNewPos);
 
-		VisualizeGrandeTrajectory(GetActorLocation(), SpringArm->GetComponentLocation());
+		FVector EndPos = SpringArm->GetComponentLocation();
+		EndPos.Z = 0.0f;
+		VisualizeGrenadeTrajectory(GetActorLocation(), EndPos);
 	}
 	
 }
@@ -207,7 +207,21 @@ void AMYPawn::GrenadeThrowStart()
 
 void AMYPawn::ThrowGrenade()
 {
+	if(!GrenadeToSpawn) return;
+	
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Instigator = this;
+	if (const auto Grenade = GetWorld()->SpawnActor<AGrenadeBase>(GrenadeToSpawn,GetActorLocation(),FRotator::ZeroRotator,SpawnParameters))
+	{
+		FVector EndPos = SpringArm->GetComponentLocation();
+		EndPos.Z = 0.0f;
+		const TArray<FVector> GrenadePathPositions{CalculateGrenadePath(GetActorLocation(),EndPos)};		
 		
+		Grenade->MoveToDestination(GrenadePathPositions);
+	}
+
+	GrenadeThrowEnd();
+			
 }
 
 void AMYPawn::GrenadeThrowEnd()
@@ -222,32 +236,39 @@ void AMYPawn::GrenadeThrowEnd()
 	SpringArm->SetRelativeLocation(FVector::Zero());
 }
 
-void AMYPawn::VisualizeGrandeTrajectory(const FVector StartPos, const FVector EndPos)
+void AMYPawn::VisualizeGrenadeTrajectory(const FVector StartPos, const FVector EndPos) const
+{
+	TArray<FVector> Positions = CalculateGrenadePath(StartPos,EndPos);
+
+	for (int i = 1; i < Positions.Num(); ++i)
+	{
+		FVector Pos1 = Positions[i - 1];
+		FVector Pos2 = Positions[i];		
+	
+		DrawDebugSphere(GetWorld(),Pos2,10,8,FColor::Green);
+		DrawDebugLine(GetWorld(),Pos1,Pos2,FColor::Red);
+	}
+	
+	DrawDebugCircle(GetWorld(),EndPos,300,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
+}
+
+TArray<FVector> AMYPawn::CalculateGrenadePath(const FVector StartPos, const FVector EndPos) const
 {
 	FVector MidPos =  (EndPos + StartPos) * 0.5f;
 	MidPos.Z += GrenadeThrowHeight;
 	DrawDebugSphere(GetWorld(),MidPos,15,8,FColor::Black);
 
 	TArray<FVector> Positions;
-	for (float t = 0.0f; t < 1.0f; t += 0.1f)
+	for (float t = 0.0f; t <= 1.0f; t += 0.05f)
 	{
 		FVector P1 = FMath::Lerp(StartPos,MidPos, t);
 		FVector P2 = FMath::Lerp(P1,EndPos, t);
 		Positions.Add(P2); 	
 	}
 
-	for (int i = 0; i < Positions.Num() - 1; ++i)
-	{
-		FVector Pos1 = Positions[i];
-		FVector Pos2 = Positions[i + 1];
-		
-		DrawDebugSphere(GetWorld(),Pos1,10,8,FColor::Green);
-		DrawDebugLine(GetWorld(),Pos1,Pos2,FColor::Red);
-	}
-	DrawDebugSphere(GetWorld(),Positions[Positions.Num() -1],10,8,FColor::Green);
-	DrawDebugLine(GetWorld(),Positions[Positions.Num() -1],EndPos,FColor::Red);
+	Positions.Add(EndPos);
 
-	DrawDebugCircle(GetWorld(),EndPos,300,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
+	return Positions;
 }
 
 void AMYPawn::StartFire()

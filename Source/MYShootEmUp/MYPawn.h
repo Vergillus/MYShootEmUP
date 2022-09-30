@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Public/GrenadeBase.h"
 #include "MYPawn.generated.h"
 
 class UFloatingPawnMovement;
@@ -82,7 +83,11 @@ protected:
 	void ThrowGrenade();
 	void GrenadeThrowEnd();
 
-	void VisualizeGrandeTrajectory(const FVector StartPos, const FVector EndPos);
+	void VisualizeGrenadeTrajectory(const FVector StartPos, const FVector EndPos) const;
+	TArray<FVector> CalculateGrenadePath(const FVector StartPos, const FVector EndPos) const;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category="Grenade")
+	TSubclassOf<AGrenadeBase> GrenadeToSpawn;
 //
 #pragma endregion
 
