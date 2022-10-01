@@ -162,7 +162,7 @@ void AMYPawn::MoveLeftRight(float AxisVal)
 
 void AMYPawn::RotateSquadMembers()
 {
-	if(!bCanRotateCharacters) return;
+	if(!bCanRotateCharacters || bCanThrowGrenade) return;
 
 	bCanRotateCharacters = false;
 

@@ -60,4 +60,6 @@ public:
 
 	void EquipWeapon(const TSubclassOf<AWeaponBase> Weapon);
 
+	FORCEINLINE AWeaponBase* GetCurrentWeapon() const {return CurrentWeapon;}
+
 };

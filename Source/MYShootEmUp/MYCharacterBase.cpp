@@ -30,6 +30,7 @@ void AMYCharacterBase::BeginPlay()
 	if(AWeaponBase* Weapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor()))
 	{
 		CurrentWeapon = Weapon;
+		CurrentWeapon->SetIsDefaultWeapon(true);
 		CurrentWeapon->SetOwner(this);
 	}	
 }
@@ -80,15 +81,15 @@ void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)
 	if (AWeaponBase* NewWeapon = GetWorld()->SpawnActor<AWeaponBase>(Weapon,SpawnParameters))
 	{
 		const FAttachmentTransformRules AttachmentTransformRules{EAttachmentRule::SnapToTarget,true};
-		NewWeapon->AttachToComponent(GetMesh(),AttachmentTransformRules,WeaponSocketName);		
-
-		DefaultWeapon->ToggleVisibility();
+		NewWeapon->AttachToComponent(GetMesh(),AttachmentTransformRules,WeaponSocketName);
+		
+		DefaultWeapon->SetVisibility(false, true);
 		CurrentWeapon = NewWeapon;
-
+		
 		CurrentWeapon->SetActorRelativeLocation(FVector::Zero());
 		CurrentWeapon->OnMagazineEmpty.AddDynamic(this,&AMYCharacterBase::DiscardWeapon);
 		
-		//CalculateWeaponPosition();
+		CalculateWeaponPosition();
 	}
 }
 
@@ -97,23 +98,24 @@ void AMYCharacterBase::DiscardWeapon()
 	CurrentWeapon->OnMagazineEmpty.RemoveDynamic(this,&AMYCharacterBase::DiscardWeapon);
 	
 	CurrentWeapon->DetachFromActor(FDetachmentTransformRules{EDetachmentRule::KeepWorld,true});
+
+	CurrentWeapon->DiscardWeapon();	
 	
 	if(AWeaponBase* Weapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor()))
 	{
 		CurrentWeapon = Weapon;
-		DefaultWeapon->ToggleVisibility();
+		DefaultWeapon->SetVisibility(true, true);
 	}	
 }
 
 void AMYCharacterBase::CalculateWeaponPosition()
 {
-	if(!CurrentWeapon) return;
+	if(!CurrentWeapon) return;	
 	
-	const FVector WeaponSocketPos = GetMesh()->GetSocketLocation(WeaponSocketName);
 	const FVector WeaponGripPos = CurrentWeapon->GetWeaponMesh()->GetSocketLocation(FName("GripPoint"));
 
-	const FVector NewPos = WeaponSocketPos - WeaponGripPos;
+	const FVector NewPos = CurrentWeapon->GetActorLocation() - WeaponGripPos;
 
-	CurrentWeapon->SetActorLocation(NewPos);	
+	CurrentWeapon->SetActorRelativeLocation(NewPos);	
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Item.h"
 #include "WeaponBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMagazineEmpty);
@@ -22,6 +23,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Weapon")
 	UStaticMeshComponent* WeaponMesh;
 
+	UPROPERTY(EditDefaultsOnly, Category= "Weapon")
+	EWeaponType WeaponType;
+	
 	/* Hit Damage of the Weapon */
 	UPROPERTY(EditDefaultsOnly, Category= "Weapon")
 	float WeaponDamage;
@@ -70,9 +74,6 @@ protected:
 	/* Cast a ray to locate the enemy and apply WeaponDamage if found */
 	virtual void LocateNHurtEnemy();
 
-	/* Called when this weapon deemed to be discarded */
-	virtual void DiscardWeapon();
-
 	void DecreaseMagazineCapacity();
 
 public:
@@ -82,6 +83,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UStaticMeshComponent* GetWeaponMesh() const {return WeaponMesh;}
 	FORCEINLINE void SetIsDefaultWeapon(const bool Val) {bIsDefaultWeapon = Val;}
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EWeaponType GetWeaponType() const {return WeaponType;}
+	
+	/* Called when this weapon deemed to be discarded */
+	virtual void DiscardWeapon();
 
 	FOnMagazineEmpty OnMagazineEmpty;
 };

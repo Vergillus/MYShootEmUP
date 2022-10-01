@@ -66,7 +66,13 @@ void AWeaponBase::LocateNHurtEnemy()
 
 void AWeaponBase::DiscardWeapon()
 {
-	
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	WeaponMesh->SetCollisionProfileName(FName("BlockAll"));	
+	WeaponMesh->SetSimulatePhysics(true);
+	const FVector Impulse = (GetActorForwardVector() + GetActorUpVector()) * 650.0f;	
+	WeaponMesh->AddImpulse(Impulse);	
+
+	SetLifeSpan(1.5f);
 }
 
 void AWeaponBase::DecreaseMagazineCapacity()
