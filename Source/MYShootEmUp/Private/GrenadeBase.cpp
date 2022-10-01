@@ -27,7 +27,7 @@ void AGrenadeBase::Tick(float DeltaSeconds)
 
 	if (bCanMove)
 	{	
-		const FVector EndPos = FollowPathPositions[PathIndex];
+		const FVector EndPos = FollowPathPositions[PathPositionIndex];
 
 		const float SegmentSpeed = MoveOnPathSpeed * FollowPathPositions.Num();
 
@@ -38,10 +38,9 @@ void AGrenadeBase::Tick(float DeltaSeconds)
 		}
 		else
 		{
-			PathIndex++;
-			SegmentT = 0.0f;
+			PathPositionIndex++;		
 
-			if (PathIndex > FollowPathPositions.Num() - 1)
+			if (PathPositionIndex > FollowPathPositions.Num() - 1)
 			{
 				Explode();
 				bCanMove = false;
@@ -60,10 +59,12 @@ void AGrenadeBase::Explode()
 	}
 }
 
-void AGrenadeBase::MoveToDestination(TArray<FVector> PathPositions)
+void AGrenadeBase::MoveToDestination(const TArray<FVector>& PathPositions)
 {
 	FollowPathPositions = PathPositions;
-	PathIndex = 1;
+
+	// Skip the first path point
+	PathPositionIndex = 1;	
 	bCanMove = true;
 }
 

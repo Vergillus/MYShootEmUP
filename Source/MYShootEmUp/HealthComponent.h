@@ -16,14 +16,16 @@ class MYSHOOTEMUP_API UHealthComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UHealthComponent();	
+	UHealthComponent();
+
+	virtual void BeginPlay() override;
 
 protected:	
 
 	UPROPERTY(EditDefaultsOnly, Category= "Health")
 	float MaxHealth;
 
-	UPROPERTY(EditDefaultsOnly, Category= "Health")
+	UPROPERTY(VisibleAnywhere, Category= "Health")
 	float CurrentHealth;	
 
 public:

@@ -22,19 +22,14 @@ void APickUp_Health::BeginPlay()
 	}
 }
 
-void APickUp_Health::OnSphereColliderBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void APickUp_Health::OnPicked(AMYCharacterBase* OverlappedCharacter)
 {
-	if (UHealthComponent* OverlappedHealthComponent = Cast<UHealthComponent>(OtherActor->GetComponentByClass(UHealthComponent::StaticClass())))
+	if (UHealthComponent* OverlappedHealthComponent = Cast<UHealthComponent>(OverlappedCharacter->GetComponentByClass(UHealthComponent::StaticClass())))
 	{
-		OverlappedHealthComponent->Heal(HealAmount);
-		OnPicked();
+		OverlappedHealthComponent->Heal(HealAmount);		
 	}
+	
+	Super::OnPicked(OverlappedCharacter);	
 }
 
-void APickUp_Health::OnPicked()
-{
-	Super::OnPicked();
 
-	Destroy();
-}

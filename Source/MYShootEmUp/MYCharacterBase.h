@@ -18,18 +18,35 @@ public:
 	AMYCharacterBase();
 
 private:
-	UPROPERTY(EditDefaultsOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
 	UHealthComponent* HealthComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
+	UChildActorComponent* DefaultWeapon;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintReadWrite)
+	class AWeaponBase* CurrentWeapon;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Weapon")
+	FName WeaponSocketName;
 
 	UFUNCTION()
 	void OnDeathHandler();
 
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* DeathMontage;
+
+	/* Event handler function. Called when CurrentWeapon has 0 magazine capacity */
+	UFUNCTION()
+	void DiscardWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void CalculateWeaponPosition();
+	
 
 public:	
 	// Called every frame
@@ -39,6 +56,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION()
-	void Fire();	
+	void Fire();
+
+	void EquipWeapon(const TSubclassOf<AWeaponBase> Weapon);
 
 };

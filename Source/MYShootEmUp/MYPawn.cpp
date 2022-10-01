@@ -3,6 +3,7 @@
 
 #include "MYPawn.h"
 
+#include "MYCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -115,6 +116,17 @@ void AMYPawn::Tick(float DeltaTime)
 		FVector EndPos = SpringArm->GetComponentLocation();
 		EndPos.Z = 0.0f;
 		VisualizeGrenadeTrajectory(GetActorLocation(), EndPos);
+	}
+
+	if (bCanFire)
+	{
+		for (const auto ChildActorComponent : SquadMembers)
+		{
+			if(const auto SquadMember = Cast<AMYCharacterBase>(ChildActorComponent->GetChildActor()))
+			{				
+				SquadMember->Fire();
+			}
+		}
 	}
 	
 }

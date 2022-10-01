@@ -28,10 +28,5 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Health", meta = (AllowPrivateAccess = "true"))
 	int32 HealAmount;
 
-	
-	virtual void OnSphereColliderBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
-	
-	virtual void OnPicked() override;
-
-	
+	virtual void OnPicked(AMYCharacterBase* OverlappedCharacter) override;
 };

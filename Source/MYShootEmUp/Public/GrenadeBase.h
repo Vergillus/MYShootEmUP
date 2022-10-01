@@ -35,13 +35,12 @@ protected:
 	UParticleSystem* ExplosionParticle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "VFX")
-	USoundCue* ExplosionSound;
+	USoundCue* ExplosionSound;	
 
-	FTimerHandle MoveToDestinationTimerHandle;
-	
+	/* Positions on a parabolic paths */
 	TArray<FVector> FollowPathPositions;
-	int PathIndex;
-	float SegmentT;
+	
+	int PathPositionIndex;	
 
 	bool bCanMove;
 	
@@ -53,6 +52,6 @@ public:
 	virtual void Explode();
 
 	UFUNCTION(BlueprintCallable)
-	void MoveToDestination(TArray<FVector> FollowPathPositions);	
+	void MoveToDestination(const TArray<FVector>& FollowPathPositions);	
 
 };

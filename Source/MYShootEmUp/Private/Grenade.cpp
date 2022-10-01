@@ -9,7 +9,7 @@
 
 void AGrenade::Explode()
 {
-	const TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes{UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic)};
+	const TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes{UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic),UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)};
 	const TArray<AActor*> ActorsToIgnore{GetOwner()};
 	TArray<AActor*> OverlappedActors;
 	
