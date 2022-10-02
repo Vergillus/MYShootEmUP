@@ -7,6 +7,8 @@
 #include "Item.h"
 #include "WeaponBase.generated.h"
 
+class UNiagaraSystem;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMagazineEmpty);
 
 UCLASS()
@@ -36,7 +38,10 @@ protected:
 
 	/* Range of the weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Weapon")
-	float FireRange;
+	float FireRange;	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Weapon")
+	float SweepRadius;
 
 	/* How many bullets can a weapon hold. We will discard weapon when MagazineCapacity reaches 0  */
 	UPROPERTY(EditDefaultsOnly, Category= "Weapon")
@@ -57,9 +62,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category= "VFX")
 	USoundBase* WeaponFireSound;
 
-	/* Particles system that shows the range of the weapon */
 	UPROPERTY(EditDefaultsOnly, Category= "VFX")
-	UParticleSystem* LaserSightParticleSystem;
+	UNiagaraSystem* MuzzleFlashNiagaraSystem;
+
+	
 	
 	FTimerHandle CooldownTimerHandle;
 	

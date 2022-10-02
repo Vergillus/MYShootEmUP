@@ -3,16 +3,22 @@
 
 #include "Weapons/WeaponBase.h"
 
+#include "NiagaraFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "MYShootEmUp/HealthComponent.h"
+
+#include "NiagaraSystem.h"
 
 // Sets default values
 AWeaponBase::AWeaponBase() :
 	WeaponDamage(10),
 	FireRate(0.5f),
 	FireRange(1000),
+	SweepRadius(10.0f),
 	MagazineCapacity(100),
-	bCanFire(true),
-	GripPointSocketName("GripPoint")
+	MuzzleSocketName("MuzzleLocation"),
+	GripPointSocketName("GripPoint"),
+	bCanFire(true)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -26,7 +32,14 @@ void AWeaponBase::FireWeapon()
 {
 	if(!bCanFire) return;
 
-	bCanFire =false;
+	if (MuzzleFlashNiagaraSystem)
+	{
+		const FTransform MuzzleSocketTransform{WeaponMesh->GetSocketTransform(MuzzleSocketName)};
+		
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this,MuzzleFlashNiagaraSystem,MuzzleSocketTransform.GetLocation(), MuzzleSocketTransform.Rotator());		
+	}
+
+	bCanFire =false;	
 
 	LocateNHurtEnemy();
 
@@ -49,12 +62,13 @@ void AWeaponBase::LocateNHurtEnemy()
 	const FVector TraceStart{MuzzleSocketTransform.GetLocation()};
 	const FVector TraceEnd{TraceStart + MuzzleSocketTransform.GetRotation().GetForwardVector() * FireRange};
 
-	DrawDebugLine(GetWorld(),TraceStart,TraceEnd,FColor::Red,false, 2.0f,0,2.5f);
-	
-
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
-	if(GetWorld()->LineTraceSingleByChannel(HitResult,TraceStart,TraceEnd,ECollisionChannel::ECC_Visibility,QueryParams))
+
+	FCollisionShape CollisionShape;
+	CollisionShape.SetSphere(SweepRadius);
+	
+	if(GetWorld()->SweepSingleByChannel(HitResult,TraceStart,TraceEnd, MuzzleSocketTransform.GetRotation(),ECollisionChannel::ECC_Visibility, CollisionShape,QueryParams))
 	{
 		if(auto HealthComp = Cast<UHealthComponent>(HitResult.GetActor()->GetComponentByClass(UHealthComponent::StaticClass())))
 		{

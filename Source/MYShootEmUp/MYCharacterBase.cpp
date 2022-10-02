@@ -77,10 +77,16 @@ void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Owner = this;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	const AWeaponBase* DefWeapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor());
+	if(DefWeapon && DefWeapon != CurrentWeapon)
+	{
+		DiscardWeapon();
+	}
 	
 	if (AWeaponBase* NewWeapon = GetWorld()->SpawnActor<AWeaponBase>(Weapon,SpawnParameters))
 	{
-		const FAttachmentTransformRules AttachmentTransformRules{EAttachmentRule::SnapToTarget,true};
+		const FAttachmentTransformRules AttachmentTransformRules{EAttachmentRule::KeepWorld, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld,true};
 		NewWeapon->AttachToComponent(GetMesh(),AttachmentTransformRules,WeaponSocketName);
 		
 		DefaultWeapon->SetVisibility(false, true);
@@ -114,7 +120,7 @@ void AMYCharacterBase::CalculateWeaponPosition()
 	
 	const FVector WeaponGripPos = CurrentWeapon->GetWeaponMesh()->GetSocketLocation(FName("GripPoint"));
 
-	const FVector NewPos = CurrentWeapon->GetActorLocation() - WeaponGripPos;
+	const FVector NewPos = CurrentWeapon->GetActorLocation() - WeaponGripPos;	
 
 	CurrentWeapon->SetActorRelativeLocation(NewPos);	
 }
