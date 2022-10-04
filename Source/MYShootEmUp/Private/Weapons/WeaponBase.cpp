@@ -68,7 +68,7 @@ void AWeaponBase::LocateNHurtEnemy()
 	FCollisionShape CollisionShape;
 	CollisionShape.SetSphere(SweepRadius);
 	
-	if(GetWorld()->SweepSingleByChannel(HitResult,TraceStart,TraceEnd, MuzzleSocketTransform.GetRotation(),ECollisionChannel::ECC_Visibility, CollisionShape,QueryParams))
+	if(GetWorld()->SweepSingleByObjectType(HitResult,TraceStart,TraceEnd, MuzzleSocketTransform.GetRotation(),ECollisionChannel::ECC_Pawn, CollisionShape,QueryParams))
 	{
 		if(auto HealthComp = Cast<UHealthComponent>(HitResult.GetActor()->GetComponentByClass(UHealthComponent::StaticClass())))
 		{

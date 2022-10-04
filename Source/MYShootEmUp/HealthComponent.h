@@ -40,5 +40,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnDeath OnDeath;
+
+	FORCEINLINE float GetCurrentHealth() const {return CurrentHealth;}
 		
 };
