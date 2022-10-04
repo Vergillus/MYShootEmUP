@@ -11,7 +11,8 @@
 #include "MYShootEmUp/HealthComponent.h"
 
 // Sets default values
-AMYAICharacter::AMYAICharacter()
+AMYAICharacter::AMYAICharacter() :
+	AttackRange(150)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -20,6 +21,16 @@ AMYAICharacter::AMYAICharacter()
 	HealthComp->OnDeath.AddDynamic(this, &AMYAICharacter::OnDeath);
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+}
+
+void AMYAICharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (AAIController* AICont = Cast<AAIController>(GetController()))
+	{
+		AICont->GetBlackboardComponent()->SetValueAsFloat("AttackRange",AttackRange);
+	}
 }
 
 

@@ -17,9 +17,7 @@ class MYSHOOTEMUP_API AMYAICharacter_Kamikaze : public AMYAICharacter
 	GENERATED_BODY()
 
 public:
-	AMYAICharacter_Kamikaze();
-
-	virtual void BeginPlay() override;
+	AMYAICharacter_Kamikaze();	
 	
 protected:
 
@@ -27,10 +25,7 @@ protected:
 	float ExplosionRadius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Explosion")
-	float ExplosionDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Explosion")
-	float AttackRange;
+	float ExplosionDamage;	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Explosion | VFX")
 	UParticleSystem* ExplosionParticle;

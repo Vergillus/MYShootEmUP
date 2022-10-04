@@ -42,5 +42,6 @@ public:
 	FOnDeath OnDeath;
 
 	FORCEINLINE float GetCurrentHealth() const {return CurrentHealth;}
+	FORCEINLINE float GetMaxHealth() const {return MaxHealth;}
 		
 };

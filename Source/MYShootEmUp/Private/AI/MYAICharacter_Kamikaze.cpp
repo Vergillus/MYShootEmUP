@@ -11,20 +11,9 @@
 
 AMYAICharacter_Kamikaze::AMYAICharacter_Kamikaze() :
 	ExplosionRadius(50),
-	ExplosionDamage(50),
-	AttackRange(10),
+	ExplosionDamage(50),	
 	bIsInitiatedKamikaze(false)
 {
-}
-
-void AMYAICharacter_Kamikaze::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (AAIController* AICont = Cast<AAIController>(GetController()))
-	{
-		AICont->GetBlackboardComponent()->SetValueAsFloat("AttackRange",AttackRange);
-	}
 }
 
 void AMYAICharacter_Kamikaze::OnDeath()
@@ -71,8 +60,9 @@ void AMYAICharacter_Kamikaze::Explode()
 	{
 		bIsInitiatedKamikaze = true;
 
+		HealthComp->DamageHealth(nullptr, HealthComp->GetMaxHealth());
 		HealthComp->OnDeath.RemoveDynamic(this, &AMYAICharacter_Kamikaze::OnDeath);
 		
-		OnDeath();
+		//OnDeath();
 	}
 }

@@ -6,13 +6,25 @@
 #include "GameFramework/GameModeBase.h"
 #include "MYShootEmUpGameMode.generated.h"
 
+class ABasePickUp;
+
 UCLASS(minimalapi)
 class AMYShootEmUpGameMode : public AGameModeBase
 {
-	GENERATED_BODY()
+	GENERATED_BODY()	
 
 public:
 	AMYShootEmUpGameMode();
+
+private:
+
+	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess = "true"))
+	TArray<TSubclassOf<ABasePickUp>> PickUpList;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	TSubclassOf<ABasePickUp> GetRandomPickUp();
 };
 
 

@@ -24,3 +24,10 @@ AMYShootEmUpGameMode::AMYShootEmUpGameMode()
 		PlayerControllerClass = PlayerControllerBPClass.Class;
 	}
 }
+
+TSubclassOf<ABasePickUp> AMYShootEmUpGameMode::GetRandomPickUp()
+{
+	const int32 RndIndex = FMath::RandRange(0, PickUpList.Num() - 1);
+
+	return PickUpList[RndIndex];
+}

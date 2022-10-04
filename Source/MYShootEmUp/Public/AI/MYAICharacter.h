@@ -17,10 +17,15 @@ public:
 	// Sets default values for this character's properties
 	AMYAICharacter();
 
+	virtual void BeginPlay() override;
+
 protected:	
 
 	UPROPERTY(EditDefaultsOnly, Category= "Components")
 	UHealthComponent* HealthComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Attack")
+	float AttackRange;
 
 	UFUNCTION(BlueprintCallable)
 	virtual void OnDeath();
