@@ -35,10 +35,7 @@ protected:
 	FName WeaponSocketName;
 
 	UFUNCTION()
-	void OnDeathHandler();
-
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* DeathMontage;
+	void OnDeathHandler();	
 
 	/* Event handler function. Called when CurrentWeapon has 0 magazine capacity */
 	UFUNCTION()

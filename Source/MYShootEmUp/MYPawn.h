@@ -13,6 +13,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class AMYCharacterBase;
 class UHealthComponent;
+class AMYCharacterBase;
 
 UCLASS()
 class MYSHOOTEMUP_API AMYPawn : public APawn
@@ -40,6 +41,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	UCameraComponent* CameraComp;
 
+	/* We do not rotate the root component so we rotate this components to rotate squad */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Movement")
 	USceneComponent* RotParentByMouse;
 
@@ -72,6 +74,8 @@ protected:
 	float CharacterRotLerpVal;
 	bool bCanRotateCharacters;
 
+	int CurrentLeaderIndex;
+
 #pragma  region Grenade Related 
 	bool bCanThrowGrenade;
 	FVector2d CachedMousePos;
@@ -88,6 +92,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category="Grenade")
 	TSubclassOf<AGrenadeBase> GrenadeToSpawn;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grenade")
+	float GrenadeSlowMoDuration;
+	FTimerHandle GrenadeSlowMotionTimerHandle;
+
+	void GrenadeSlowMoTimer();
+	void ChangeTimeDilations(bool bUseSlowMo);
 //
 #pragma endregion
 
@@ -97,7 +108,12 @@ protected:
 	void EndFire();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<UChildActorComponent*> SquadMembers;	
+	TArray<UChildActorComponent*> SquadMembers;
+
+	int AliveMembersCount;
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeLeader();
 	
 public:	
 	// Called every frame
@@ -105,5 +121,8 @@ public:
 
 	// Called to bind functionality to input //
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(BlueprintCallable)
+	void MemberDeath();
 
 };

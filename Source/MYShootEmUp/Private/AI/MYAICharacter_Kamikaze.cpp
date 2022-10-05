@@ -22,6 +22,8 @@ void AMYAICharacter_Kamikaze::OnDeath()
 	{
 		Explode();		
 	}
+
+	HealthComp->OnDeath.RemoveDynamic(this, &AMYAICharacter_Kamikaze::OnDeath);
 	
 	Super::OnDeath();
 

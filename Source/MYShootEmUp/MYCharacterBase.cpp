@@ -4,6 +4,9 @@
 #include "MYCharacterBase.h"
 
 #include "HealthComponent.h"
+#include "MYPawn.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Weapons/WeaponBase.h"
 
@@ -62,13 +65,24 @@ void AMYCharacterBase::OnDeathHandler()
 	// Clear parent
 	DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,EDetachmentRule::KeepWorld,false));
 	
-	// Play Death montage
-	if (DeathMontage)
-	{
-		
-	}
+	// Ragdoll
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName("Ragdoll");
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCharacterMovement()->DisableMovement();
+
+	GetMesh()->SetSimulatePhysics(true);	
+			
+	// set Lifespan
+	SetLifeSpan(2.0f);	
 
 	// Notify squad
+	if(AMYPawn* Pawn = Cast<AMYPawn>(UGameplayStatics::GetPlayerPawn(this,0)))
+	{
+		Pawn->MemberDeath();
+		DiscardWeapon();
+	}
 }
 
 void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)

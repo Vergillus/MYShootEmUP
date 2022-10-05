@@ -53,9 +53,7 @@ void AMYAICharacter::OnDeath()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
 
-	GetMesh()->SetSimulatePhysics(true);
-
-	HealthComp->SetActive(false);
+	GetMesh()->SetSimulatePhysics(true);	
 			
 	// set Lifespan
 	SetLifeSpan(2.0f);

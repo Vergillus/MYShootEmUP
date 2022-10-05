@@ -18,7 +18,9 @@ AMYPawn::AMYPawn() :
 	bCanRotateCharacters(true),
 	bCanThrowGrenade(false),
 	bCanFire(false),
-	GrenadeThrowHeight(2000)
+	GrenadeThrowHeight(2000),
+	CurrentLeaderIndex(-1),
+	GrenadeSlowMoDuration(5.0f)
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -78,7 +80,10 @@ AMYPawn::AMYPawn() :
 void AMYPawn::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AliveMembersCount = SquadMembers.Num();
 	
+	ChangeLeader();	
 }
 
 // Called every frame
@@ -149,6 +154,8 @@ void AMYPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMYPawn::MoveForwardBack(float AxisVal)
 {
+	if(bCanThrowGrenade) return;
+	
 	FVector CameraForward = UGameplayStatics::GetPlayerCameraManager(GetWorld(),0)->GetActorForwardVector();
 	CameraForward.Z = 0;
 	PawnMovementComp->AddInputVector(CameraForward * AxisVal);
@@ -156,6 +163,8 @@ void AMYPawn::MoveForwardBack(float AxisVal)
 
 void AMYPawn::MoveLeftRight(float AxisVal)
 {
+	if(bCanThrowGrenade) return;
+	
 	const FVector CameraRight = UGameplayStatics::GetPlayerCameraManager(GetWorld(),0)->GetActorRightVector();	
 	PawnMovementComp->AddInputVector(CameraRight * AxisVal);
 }
@@ -192,6 +201,8 @@ void AMYPawn::RotateSquadInTime(const float Duration,const FRotator CurrentRot, 
 		SquadParent->SetRelativeRotation(DesiredRot);
 		bCanRotateCharacters = true;
 		GetWorldTimerManager().ClearTimer(CharacterRotationTimerHandle);
+
+		ChangeLeader();	
 	}
 }
 
@@ -209,12 +220,39 @@ void AMYPawn::GrenadeThrowStart()
 			FVector2d ScreenPos;
 			UGameplayStatics::ProjectWorldToScreen(PlayerCont,GetActorLocation(),ScreenPos);
 			PlayerCont->SetMouseLocation(ScreenPos.X,ScreenPos.Y);	
-		}				
+		}
+
+		// @FIX ME : Use timeline with ignore time dilation option instead....
+		GetWorldTimerManager().SetTimer(GrenadeSlowMotionTimerHandle,this, &AMYPawn::GrenadeSlowMoTimer,GrenadeSlowMoDuration / 0.1f);		
+		ChangeTimeDilations(true);
 	}
 	else
 	{
 		GrenadeThrowEnd();
 	}
+}
+
+void AMYPawn::GrenadeSlowMoTimer()
+{
+	if (bCanThrowGrenade)
+	{
+		ChangeTimeDilations(false);
+	}
+}
+
+void AMYPawn::ChangeTimeDilations(bool bUseSlowMo)
+{
+	if (bUseSlowMo)
+	{
+		UGameplayStatics::SetGlobalTimeDilation(this,0.1f);
+		CustomTimeDilation = 5.0f;	
+	}
+	else
+	{
+		UGameplayStatics::SetGlobalTimeDilation(this,1.0f);
+		CustomTimeDilation = 1.0f;
+	}
+	
 }
 
 void AMYPawn::ThrowGrenade()
@@ -246,6 +284,8 @@ void AMYPawn::GrenadeThrowEnd()
 	}				
 
 	SpringArm->SetRelativeLocation(FVector::Zero());
+
+	ChangeTimeDilations(false);
 }
 
 void AMYPawn::VisualizeGrenadeTrajectory(const FVector StartPos, const FVector EndPos) const
@@ -297,4 +337,34 @@ void AMYPawn::StartFire()
 void AMYPawn::EndFire()
 {
 	bCanFire = false;
+}
+
+void AMYPawn::MemberDeath()
+{
+	AliveMembersCount--;
+
+	if (AliveMembersCount == 0)
+	{
+		PawnMovementComp->StopActiveMovement();
+
+		UGameplayStatics::SetGlobalTimeDilation(this,0.0f);
+
+		// Notify GM to load game over level
+	}
+}
+
+void AMYPawn::ChangeLeader()
+{
+	CurrentLeaderIndex++;
+
+	if(CurrentLeaderIndex == SquadMembers.Num()) CurrentLeaderIndex = 0;
+
+	int PreviousLeaderIndex = CurrentLeaderIndex - 1;
+	if (CurrentLeaderIndex == 0)
+	{
+		PreviousLeaderIndex = SquadMembers.Num() - 1;
+	}
+	
+	SquadMembers[PreviousLeaderIndex]->GetChildActor()->GetRootComponent()->ComponentTags.Empty();
+	SquadMembers[CurrentLeaderIndex]->GetChildActor()->GetRootComponent()->ComponentTags.Add(FName("Leader"));
 }
