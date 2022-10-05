@@ -5,6 +5,7 @@
 
 #include "AIController.h"
 #include "BrainComponent.h"
+#include "LootGeneratorComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -19,6 +20,9 @@ AMYAICharacter::AMYAICharacter() :
 
 	HealthComp = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Comp"));
 	HealthComp->OnDeath.AddDynamic(this, &AMYAICharacter::OnDeath);
+
+	LootGenComp = CreateDefaultSubobject<ULootGeneratorComponent>(TEXT("Loot Generator"));
+	
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
@@ -48,6 +52,10 @@ void AMYAICharacter::OnDeath()
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
+
+	GetMesh()->SetSimulatePhysics(true);
+
+	HealthComp->SetActive(false);
 			
 	// set Lifespan
 	SetLifeSpan(2.0f);

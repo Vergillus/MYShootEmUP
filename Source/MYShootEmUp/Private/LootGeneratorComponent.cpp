@@ -33,7 +33,7 @@ void ULootGeneratorComponent::BeginPlay()
 
 void ULootGeneratorComponent::GenerateLootOnDead()
 {
-	if(auto GM = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(GetOwner())))
+	if(const auto GM = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(GetOwner())))
 	{
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

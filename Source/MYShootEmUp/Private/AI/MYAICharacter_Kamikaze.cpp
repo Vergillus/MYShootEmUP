@@ -56,12 +56,12 @@ void AMYAICharacter_Kamikaze::Explode()
 		}
 	}
 	
-	if(HealthComp->GetCurrentHealth() != 0)
+	if(HealthComp->GetCurrentHealth() > 0)
 	{
 		bIsInitiatedKamikaze = true;
 
 		HealthComp->DamageHealth(nullptr, HealthComp->GetMaxHealth());
-		HealthComp->OnDeath.RemoveDynamic(this, &AMYAICharacter_Kamikaze::OnDeath);
+		HealthComp->OnDeath.RemoveDynamic(this, &AMYAICharacter_Kamikaze::OnDeath);//
 		
 		//OnDeath();
 	}

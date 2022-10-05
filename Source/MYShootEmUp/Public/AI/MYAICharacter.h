@@ -7,6 +7,7 @@
 #include "MYAICharacter.generated.h"
 
 class UHealthComponent;
+class ULootGeneratorComponent;
 
 UCLASS()
 class MYSHOOTEMUP_API AMYAICharacter : public ACharacter
@@ -23,6 +24,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category= "Components")
 	UHealthComponent* HealthComp;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Components")
+	ULootGeneratorComponent* LootGenComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category= "Attack")
 	float AttackRange;

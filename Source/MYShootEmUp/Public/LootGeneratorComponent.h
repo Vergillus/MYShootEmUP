@@ -23,7 +23,4 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void GenerateLootOnDead();
 
-
-
-		
 };

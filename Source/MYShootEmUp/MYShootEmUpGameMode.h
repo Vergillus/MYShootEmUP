@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
 #include "GameFramework/GameModeBase.h"
 #include "MYShootEmUpGameMode.generated.h"
 
 class ABasePickUp;
+class UEnvQuery;
+class UEnvQueryInstanceBlueprintWrapper;
 
 UCLASS(minimalapi)
 class AMYShootEmUpGameMode : public AGameModeBase
@@ -16,10 +19,28 @@ class AMYShootEmUpGameMode : public AGameModeBase
 public:
 	AMYShootEmUpGameMode();
 
+	virtual void BeginPlay() override;
+
 private:
 
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess = "true"))
 	TArray<TSubclassOf<ABasePickUp>> PickUpList;
+
+	UPROPERTY(EditDefaultsOnly, Category= "AI", meta=(AllowPrivateAccess = "true"))
+	UEnvQuery* SpawnBotQuery;
+
+	UPROPERTY(EditDefaultsOnly, Category= "AI", meta=(AllowPrivateAccess = "true"))
+	TArray<TSubclassOf<AActor>> BotsToSpawn; 
+	
+	UPROPERTY(EditDefaultsOnly, Category= "AI")
+	float SpawnTimerInterval;
+
+	FTimerHandle SpawnBotTimerHandle;
+
+	void SpawnBotTimerElapsed();
+
+	UFUNCTION()
+	void OnSpawnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
 public:
 

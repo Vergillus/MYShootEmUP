@@ -3,9 +3,13 @@
 #include "MYShootEmUpGameMode.h"
 #include "MYShootEmUpPlayerController.h"
 #include "MYShootEmUpCharacter.h"
+#include "EnvironmentQuery/EnvQuery.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "UObject/ConstructorHelpers.h"
 
-AMYShootEmUpGameMode::AMYShootEmUpGameMode()
+AMYShootEmUpGameMode::AMYShootEmUpGameMode() :
+	SpawnTimerInterval(2.0f)
 {
 	// use our custom PlayerController class
 	PlayerControllerClass = AMYShootEmUpPlayerController::StaticClass();
@@ -22,6 +26,42 @@ AMYShootEmUpGameMode::AMYShootEmUpGameMode()
 	if(PlayerControllerBPClass.Class != NULL)
 	{
 		PlayerControllerClass = PlayerControllerBPClass.Class;
+	}
+}
+
+void AMYShootEmUpGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	GetWorldTimerManager().SetTimer(SpawnBotTimerHandle, this, &AMYShootEmUpGameMode::SpawnBotTimerElapsed, SpawnTimerInterval,true);
+}
+
+void AMYShootEmUpGameMode::SpawnBotTimerElapsed()
+{
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(this, SpawnBotQuery,this, EEnvQueryRunMode::RandomBest5Pct,nullptr);
+	if (ensure(QueryInstance))
+	{
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this,&AMYShootEmUpGameMode::OnSpawnBotQueryCompleted);
+	}
+}
+
+void AMYShootEmUpGameMode::OnSpawnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	EEnvQueryStatus::Type QueryStatus)
+{
+	if (QueryStatus != EEnvQueryStatus::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spawn bot EQS Query Failed"));
+		return;
+	}
+
+	TArray<FVector> Locations = QueryInstance->GetResultsAsLocations();
+	if (!Locations.IsEmpty())
+	{
+		for (auto Location : Locations)
+		{
+			const int RndIndex = FMath::RandRange(0, BotsToSpawn.Num() - 1);
+			GetWorld()->SpawnActor<AActor>(BotsToSpawn[RndIndex], Location, FRotator::ZeroRotator);
+		}
 	}
 }
 
