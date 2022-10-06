@@ -14,6 +14,7 @@ class UCameraComponent;
 class AMYCharacterBase;
 class UHealthComponent;
 class AMYCharacterBase;
+class UCurveFloat;
 
 UCLASS()
 class MYSHOOTEMUP_API AMYPawn : public APawn
@@ -77,7 +78,10 @@ protected:
 	int CurrentLeaderIndex;
 
 #pragma  region Grenade Related 
+
+	UPROPERTY(BlueprintReadOnly)
 	bool bCanThrowGrenade;
+	
 	FVector2d CachedMousePos;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grenade")
@@ -92,14 +96,30 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly, Category="Grenade")
 	TSubclassOf<AGrenadeBase> GrenadeToSpawn;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Grenade")
-	float GrenadeSlowMoDuration;
-	FTimerHandle GrenadeSlowMotionTimerHandle;
-
-	void GrenadeSlowMoTimer();
+	
+	UFUNCTION(BlueprintCallable)
 	void ChangeTimeDilations(bool bUseSlowMo);
-//
+
+	// Implemented in the BP of this class
+	UFUNCTION(BlueprintImplementableEvent)
+	void StartSlowMoTimer();
+
+	// Implemented in the BP of this class
+	UFUNCTION(BlueprintImplementableEvent)
+	void StopSlowMoTimer();
+
+	UPROPERTY(EditDefaultsOnly, Category= "Grenade")
+	float SpringArmMovementSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Grenade")
+	float MaxGrenadeThrowDistance;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Grenade")
+	float MaxGrenadeCount;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Grenade")
+	float CurrentGrenadeCount;
+
 #pragma endregion
 
 	bool bCanFire;
@@ -124,5 +144,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void MemberDeath();
+
+	FORCEINLINE void GrenadePickedUp() { CurrentGrenadeCount = FMath::Min(CurrentGrenadeCount + 1, MaxGrenadeCount) ;}
 
 };

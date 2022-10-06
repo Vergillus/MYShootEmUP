@@ -9,7 +9,9 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "MYShootEmUp/HealthComponent.h"
+#include "MYShootEmUp/MYShootEmUpGameMode.h"
 
 // Sets default values
 AMYAICharacter::AMYAICharacter() :
@@ -44,6 +46,11 @@ void AMYAICharacter::OnDeath()
 	if(const AAIController* AIC = Cast<AAIController>(GetController()))
 	{
 		AIC->GetBrainComponent()->StopLogic("Killed");
+	}
+
+	if(const auto GameMode = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		GameMode->IncreaseKillCount();
 	}
 
 	// Ragdoll

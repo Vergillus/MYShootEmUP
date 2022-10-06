@@ -42,10 +42,16 @@ private:
 	UFUNCTION()
 	void OnSpawnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
+	UPROPERTY(VisibleAnywhere)
+	int KillCount;
+
 public:
 
 	UFUNCTION(BlueprintCallable)
 	TSubclassOf<ABasePickUp> GetRandomPickUp();
+
+	FORCEINLINE int GetKillCount() const {return KillCount;}
+	FORCEINLINE void IncreaseKillCount() { KillCount++ ;}
 };
 
 

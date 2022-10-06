@@ -25,12 +25,10 @@ void UHealthComponent::BeginPlay()
 
 void UHealthComponent::DamageHealth(AActor* Instigator,const float Damage)
 {
-	if(Damage <= 0) return;
+	if(Damage <= 0 || CurrentHealth <= 0) return;
 
 	CurrentHealth -= Damage;
 	CurrentHealth = FMath::Max(CurrentHealth,0);
-
-	UE_LOG(LogTemp,Warning,TEXT("Damage Received : Damage %f Health %f"), Damage, CurrentHealth);
 
 	OnHealthChanged.Broadcast(Instigator,MaxHealth,CurrentHealth);
 	

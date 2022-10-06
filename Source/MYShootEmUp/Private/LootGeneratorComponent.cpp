@@ -14,7 +14,6 @@ ULootGeneratorComponent::ULootGeneratorComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
 	// ...
 }
 
@@ -40,11 +39,7 @@ void ULootGeneratorComponent::GenerateLootOnDead()
 
 		if (const auto PickUpToSpawn = GM->GetRandomPickUp())
 		{
-			
-			 if(GetWorld()->SpawnActor<ABasePickUp>(PickUpToSpawn ,GetOwner()->GetActorLocation(),FRotator::ZeroRotator,SpawnParameters))
-			 {
-			 	UE_LOG(LogTemp,Warning,TEXT("LOOOOOOT"));
-			 }
+			GetWorld()->SpawnActor<ABasePickUp>(PickUpToSpawn ,GetOwner()->GetActorLocation(),FRotator::ZeroRotator,SpawnParameters);			 
 		}		
 	}
 }

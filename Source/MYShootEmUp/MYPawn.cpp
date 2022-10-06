@@ -16,11 +16,15 @@
 AMYPawn::AMYPawn() :
 	CharacterRotationDuration(0.25f),
 	bCanRotateCharacters(true),
-	bCanThrowGrenade(false),
-	bCanFire(false),
-	GrenadeThrowHeight(2000),
 	CurrentLeaderIndex(-1),
-	GrenadeSlowMoDuration(5.0f)
+	bCanThrowGrenade(false),
+	GrenadeThrowHeight(2000),	
+	bCanFire(false),
+	SpringArmMovementSpeed(25),
+	MaxGrenadeThrowDistance(1500),
+	MaxGrenadeCount(5),
+	CurrentGrenadeCount(MaxGrenadeCount)
+
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -111,12 +115,12 @@ void AMYPawn::Tick(float DeltaTime)
 
 	if (bCanThrowGrenade)
 	{
-		DrawDebugCircle(GetWorld(),GetActorLocation(),1500,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
+		DrawDebugCircle(GetWorld(),GetActorLocation(),MaxGrenadeThrowDistance,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
 //		DrawDebugSphere(GetWorld(),SpringArm->GetRelativeLocation(), 15.0f, 6, FColor::Magenta);
 
-		FVector SpringArmNewPos = FMath::Lerp(SpringArm->GetRelativeLocation(), LinePlaneIntersectionPoint, DeltaTime * 0.5f);
-		SpringArmNewPos = SpringArmNewPos.GetClampedToSize(0,1500);
-		SpringArm->SetRelativeLocation(SpringArmNewPos);
+		// FVector SpringArmNewPos = FMath::Lerp(SpringArm->GetRelativeLocation(), LinePlaneIntersectionPoint, DeltaTime * 0.5f);
+		// SpringArmNewPos = SpringArmNewPos.GetClampedToSize(0,1500);
+		// SpringArm->SetRelativeLocation(SpringArmNewPos);
 
 		FVector EndPos = SpringArm->GetComponentLocation();
 		EndPos.Z = 0.0f;
@@ -152,21 +156,40 @@ void AMYPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
+#pragma region Movement Functions
+
 void AMYPawn::MoveForwardBack(float AxisVal)
 {
-	if(bCanThrowGrenade) return;
-	
 	FVector CameraForward = UGameplayStatics::GetPlayerCameraManager(GetWorld(),0)->GetActorForwardVector();
 	CameraForward.Z = 0;
-	PawnMovementComp->AddInputVector(CameraForward * AxisVal);
+	
+	if(bCanThrowGrenade)
+	{
+		FVector NewLocation = SpringArm->GetRelativeLocation() + CameraForward * AxisVal * SpringArmMovementSpeed;
+		NewLocation = NewLocation.GetClampedToSize(0,MaxGrenadeThrowDistance);
+		SpringArm->SetRelativeLocation(NewLocation);		
+	}
+	else
+	{
+		PawnMovementComp->AddInputVector(CameraForward * AxisVal);		
+	}
+	
 }
 
 void AMYPawn::MoveLeftRight(float AxisVal)
 {
-	if(bCanThrowGrenade) return;
-	
 	const FVector CameraRight = UGameplayStatics::GetPlayerCameraManager(GetWorld(),0)->GetActorRightVector();	
-	PawnMovementComp->AddInputVector(CameraRight * AxisVal);
+	if(bCanThrowGrenade)
+	{
+		FVector NewLocation = SpringArm->GetRelativeLocation() + CameraRight * AxisVal * SpringArmMovementSpeed;
+		NewLocation = NewLocation.GetClampedToSize(0,MaxGrenadeThrowDistance);
+		SpringArm->SetRelativeLocation(NewLocation);		
+	}
+	else
+	{
+		PawnMovementComp->AddInputVector(CameraRight * AxisVal);		
+	}
+	
 }
 
 void AMYPawn::RotateSquadMembers()
@@ -206,9 +229,14 @@ void AMYPawn::RotateSquadInTime(const float Duration,const FRotator CurrentRot, 
 	}
 }
 
+#pragma endregion 
+
+#pragma region Grenade Functions
 
 void AMYPawn::GrenadeThrowStart()
 {
+	if(CurrentGrenadeCount == 0) return;
+	
 	if (!bCanThrowGrenade)
 	{
 		bCanThrowGrenade = true;
@@ -222,21 +250,13 @@ void AMYPawn::GrenadeThrowStart()
 			PlayerCont->SetMouseLocation(ScreenPos.X,ScreenPos.Y);	
 		}
 
-		// @FIX ME : Use timeline with ignore time dilation option instead....
-		GetWorldTimerManager().SetTimer(GrenadeSlowMotionTimerHandle,this, &AMYPawn::GrenadeSlowMoTimer,GrenadeSlowMoDuration / 0.1f);		
-		ChangeTimeDilations(true);
+		
+		StartSlowMoTimer();		
+		ChangeTimeDilations(true);//
 	}
 	else
 	{
 		GrenadeThrowEnd();
-	}
-}
-
-void AMYPawn::GrenadeSlowMoTimer()
-{
-	if (bCanThrowGrenade)
-	{
-		ChangeTimeDilations(false);
 	}
 }
 
@@ -258,6 +278,10 @@ void AMYPawn::ChangeTimeDilations(bool bUseSlowMo)
 void AMYPawn::ThrowGrenade()
 {
 	if(!GrenadeToSpawn) return;
+
+	CurrentGrenadeCount--;
+	
+	StopSlowMoTimer();
 	
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Instigator = this;
@@ -322,6 +346,8 @@ TArray<FVector> AMYPawn::CalculateGrenadePath(const FVector StartPos, const FVec
 
 	return Positions;
 }
+
+#pragma endregion 
 
 void AMYPawn::StartFire()
 {
