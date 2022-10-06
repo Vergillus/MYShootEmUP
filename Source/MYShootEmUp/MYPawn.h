@@ -42,6 +42,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category= "Camera")
 	UCameraComponent* CameraComp;
 
+	UPROPERTY(EditAnywhere)
+	UDecalComponent* DecalComponent;
+
 	/* We do not rotate the root component so we rotate this components to rotate squad */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Movement")
 	USceneComponent* RotParentByMouse;

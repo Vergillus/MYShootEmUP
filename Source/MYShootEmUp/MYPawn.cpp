@@ -6,6 +6,7 @@
 #include "MYCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/DecalComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -42,6 +43,11 @@ AMYPawn::AMYPawn() :
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SpringArm);
+
+	DecalComponent = CreateDefaultSubobject<UDecalComponent>(TEXT("Crosshair Decal"));
+	DecalComponent->SetupAttachment(RootComponent);
+	DecalComponent->DecalSize = FVector{50,50,20};
+	DecalComponent->SetRelativeLocation(FVector(0,0,-96));
 
 	RotParentByMouse = CreateDefaultSubobject<USceneComponent>(TEXT("Rotate Squad by Mouse"));
 	RotParentByMouse->SetupAttachment(RootComponent);
@@ -105,12 +111,17 @@ void AMYPawn::Tick(float DeltaTime)
 	float T;
 	if(UKismetMathLibrary::LinePlaneIntersection_OriginNormal(CameraLocation, MouseWorldDir * 10000, FVector::Zero(),FVector::UpVector, T,LinePlaneIntersectionPoint))
 	{
-		DrawDebugSphere(GetWorld(),LinePlaneIntersectionPoint, 25.0f, 6, FColor::Cyan);
+		//DrawDebugSphere(GetWorld(),LinePlaneIntersectionPoint, 25.0f, 6, FColor::Cyan);
 		FVector RotateDirection = (LinePlaneIntersectionPoint - GetActorLocation()).GetSafeNormal();
 		RotateDirection.Z = 0.0f;
 
 		if(!bCanThrowGrenade)
 			RotParentByMouse->SetRelativeRotation(UKismetMathLibrary::MakeRotFromX(RotateDirection)); 
+	}
+
+	if (DecalComponent)
+	{
+		DecalComponent->SetWorldLocation(LinePlaneIntersectionPoint);
 	}
 
 	if (bCanThrowGrenade)
@@ -120,7 +131,7 @@ void AMYPawn::Tick(float DeltaTime)
 
 		// FVector SpringArmNewPos = FMath::Lerp(SpringArm->GetRelativeLocation(), LinePlaneIntersectionPoint, DeltaTime * 0.5f);
 		// SpringArmNewPos = SpringArmNewPos.GetClampedToSize(0,1500);
-		// SpringArm->SetRelativeLocation(SpringArmNewPos);
+		// SpringArm->SetRelativeLocation(SpringArmNewPos);		
 
 		FVector EndPos = SpringArm->GetComponentLocation();
 		EndPos.Z = 0.0f;
