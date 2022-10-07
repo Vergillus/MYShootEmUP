@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "MYCharacterBase.generated.h"
 
+class FOnLeaderChanged;
 class UHealthComponent;
 
 UCLASS()
@@ -15,7 +16,7 @@ class MYSHOOTEMUP_API AMYCharacterBase : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	AMYCharacterBase();
+	AMYCharacterBase();	
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
@@ -25,8 +26,10 @@ private:
 	UChildActorComponent* DefaultWeapon;
 
 protected:
+	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
 
 	UPROPERTY(BlueprintReadWrite)
 	class AWeaponBase* CurrentWeapon;
@@ -43,7 +46,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void CalculateWeaponPosition();
-	
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsLeader;
+
+	UFUNCTION()
+	void OnLeaderChangedHandler();	
 
 public:	
 	// Called every frame
@@ -59,4 +67,7 @@ public:
 
 	FORCEINLINE AWeaponBase* GetCurrentWeapon() const {return CurrentWeapon;}
 
+	void SubscribeToLeaderChange(FOnLeaderChanged& LeaderChanged);
+
 };
+

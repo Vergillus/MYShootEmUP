@@ -20,11 +20,11 @@ AMYPawn::AMYPawn() :
 	CurrentLeaderIndex(-1),
 	bCanThrowGrenade(false),
 	GrenadeThrowHeight(2000),	
-	bCanFire(false),
 	SpringArmMovementSpeed(25),
 	MaxGrenadeThrowDistance(1500),
 	MaxGrenadeCount(5),
-	CurrentGrenadeCount(MaxGrenadeCount)
+	CurrentGrenadeCount(MaxGrenadeCount),
+	bCanFire(false)
 
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -77,7 +77,7 @@ AMYPawn::AMYPawn() :
 	    	ChildActorComponent->SetupAttachment(SquadMemberPositions[i]);
 	    	ChildActorComponent->SetUsingAbsoluteScale(true);	 
 	    	ChildActorComponent->SetRelativeLocation(FVector::UpVector * 90);
-	    	ChildActorComponent->CreateChildActor();
+	    	ChildActorComponent->CreateChildActor();    	
 
 	    	SquadMembers.Add(ChildActorComponent);
 	    }
@@ -92,6 +92,14 @@ void AMYPawn::BeginPlay()
 	Super::BeginPlay();
 
 	AliveMembersCount = SquadMembers.Num();
+
+	for (const auto SquadMember : SquadMembers)
+	{
+		if(const auto Member = Cast<AMYCharacterBase>(SquadMember->GetChildActor()))
+		{
+			Member->SubscribeToLeaderChange(OnLeaderChanged);
+		}
+	}	
 	
 	ChangeLeader();	
 }
@@ -148,7 +156,7 @@ void AMYPawn::Tick(float DeltaTime)
 			}
 		}
 	}
-	
+	//
 }
 
 // Called to bind functionality to input
@@ -246,7 +254,7 @@ void AMYPawn::RotateSquadInTime(const float Duration,const FRotator CurrentRot, 
 
 void AMYPawn::GrenadeThrowStart()
 {
-	if(CurrentGrenadeCount == 0) return;
+	if(CurrentGrenadeCount == 0 || AliveMembersCount == 0) return;
 	
 	if (!bCanThrowGrenade)
 	{
@@ -376,9 +384,15 @@ void AMYPawn::EndFire()
 	bCanFire = false;
 }
 
-void AMYPawn::MemberDeath()
+void AMYPawn::MemberDeath(bool bIsLeaderDead)
 {
 	AliveMembersCount--;
+
+	// If the current leader is dead then change the leader
+	if(bIsLeaderDead)
+	{
+		RotateSquadMembers();
+	}
 
 	if (AliveMembersCount == 0)
 	{
@@ -392,6 +406,8 @@ void AMYPawn::MemberDeath()
 
 void AMYPawn::ChangeLeader()
 {
+	if(AliveMembersCount == 0) return;
+	
 	CurrentLeaderIndex++;
 
 	if(CurrentLeaderIndex == SquadMembers.Num()) CurrentLeaderIndex = 0;
@@ -401,7 +417,19 @@ void AMYPawn::ChangeLeader()
 	{
 		PreviousLeaderIndex = SquadMembers.Num() - 1;
 	}
-	
-	SquadMembers[PreviousLeaderIndex]->GetChildActor()->GetRootComponent()->ComponentTags.Empty();
-	SquadMembers[CurrentLeaderIndex]->GetChildActor()->GetRootComponent()->ComponentTags.Add(FName("Leader"));
+
+	if (USceneComponent* PrevLeaderRoot = SquadMembers[PreviousLeaderIndex]->GetChildActor()->GetRootComponent())
+	{
+		PrevLeaderRoot->ComponentTags.Empty();
+	}
+
+	if (USceneComponent* CurrLeaderRoot = SquadMembers[CurrentLeaderIndex]->GetChildActor()->GetRootComponent())
+	{
+		CurrLeaderRoot->ComponentTags.Add(FName("Leader"));
+		OnLeaderChanged.Broadcast();
+	}
+	else
+	{
+		ChangeLeader();
+	}	
 }

@@ -16,6 +16,8 @@ class UHealthComponent;
 class AMYCharacterBase;
 class UCurveFloat;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeaderChanged);
+
 UCLASS()
 class MYSHOOTEMUP_API AMYPawn : public APawn
 {
@@ -136,7 +138,7 @@ protected:
 	int AliveMembersCount;
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeLeader();
+	void ChangeLeader();	
 	
 public:	
 	// Called every frame
@@ -146,8 +148,11 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION(BlueprintCallable)
-	void MemberDeath();
+	void MemberDeath(bool bIsLeaderDead = false);
 
 	FORCEINLINE void GrenadePickedUp() { CurrentGrenadeCount = FMath::Min(CurrentGrenadeCount + 1, MaxGrenadeCount) ;}
+
+	
+	FOnLeaderChanged OnLeaderChanged;
 
 };

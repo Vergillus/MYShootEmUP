@@ -12,7 +12,8 @@
 
 // Sets default values
 AMYCharacterBase::AMYCharacterBase() :
-	WeaponSocketName("hand_r_WeaponSocket")
+	WeaponSocketName("hand_r_WeaponSocket"),
+	bIsLeader(false)
 
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -35,7 +36,7 @@ void AMYCharacterBase::BeginPlay()
 		CurrentWeapon = Weapon;
 		CurrentWeapon->SetIsDefaultWeapon(true);
 		CurrentWeapon->SetOwner(this);
-	}	
+	}
 }
 
 // Called every frame
@@ -80,7 +81,8 @@ void AMYCharacterBase::OnDeathHandler()
 	// Notify squad
 	if(AMYPawn* Pawn = Cast<AMYPawn>(UGameplayStatics::GetPlayerPawn(this,0)))
 	{
-		Pawn->MemberDeath();
+		Pawn->MemberDeath(bIsLeader);
+		Pawn->OnLeaderChanged.Remove(this,FName("OnLeaderChangedHandler"));
 		DiscardWeapon();
 	}
 }
@@ -139,3 +141,12 @@ void AMYCharacterBase::CalculateWeaponPosition()
 	CurrentWeapon->SetActorRelativeLocation(NewPos);	
 }
 
+void AMYCharacterBase::OnLeaderChangedHandler()
+{
+	bIsLeader = RootComponent->ComponentHasTag(FName("Leader"));
+}
+
+void AMYCharacterBase::SubscribeToLeaderChange(FOnLeaderChanged& LeaderChanged)
+{
+	LeaderChanged.AddDynamic(this, &AMYCharacterBase::OnLeaderChangedHandler);	
+}

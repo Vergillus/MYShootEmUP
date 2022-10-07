@@ -4,6 +4,7 @@
 #include "MYShootEmUp/Public/GrenadeBase.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Sound/SoundCue.h"
 
@@ -29,11 +30,15 @@ void AGrenadeBase::Tick(float DeltaSeconds)
 	{	
 		const FVector EndPos = FollowPathPositions[PathPositionIndex];
 
-		const float SegmentSpeed = MoveOnPathSpeed * FollowPathPositions.Num();
+		const float SegmentSpeed = MoveOnPathSpeed * FollowPathPositions.Num();		 
 
 		if (FVector::Distance(GetActorLocation(), EndPos) > 0.1f)
 		{
 			const FVector NewPos = FMath::VInterpTo(GetActorLocation(),EndPos,DeltaSeconds, SegmentSpeed);
+
+			const FRotator LookAtRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),EndPos);			
+			SetActorRotation(LookAtRot);
+			
 			SetActorLocation(NewPos);			
 		}
 		else

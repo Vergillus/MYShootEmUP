@@ -24,13 +24,6 @@ AMYProjectileBase::AMYProjectileBase() :
 	ProjectileMovementComponent->InitialSpeed = 2000.0f;
 }
 
-// Called when the game starts or when spawned
-void AMYProjectileBase::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
 void AMYProjectileBase::ApplyDamage(AActor* DamageReceiver)
 {
 	if (const auto HealthComp = Cast<UHealthComponent>(DamageReceiver->GetComponentByClass(UHealthComponent::StaticClass())))
