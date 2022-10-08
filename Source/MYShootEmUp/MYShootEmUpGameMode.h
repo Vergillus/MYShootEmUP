@@ -50,8 +50,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TSubclassOf<ABasePickUp> GetRandomPickUp();
 
+	UFUNCTION(BlueprintCallable)
 	FORCEINLINE int GetKillCount() const {return KillCount;}
 	FORCEINLINE void IncreaseKillCount() { KillCount++ ;}
+
+	void GameOver();
 };
 
 

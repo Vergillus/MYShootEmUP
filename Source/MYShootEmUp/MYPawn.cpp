@@ -4,6 +4,7 @@
 #include "MYPawn.h"
 
 #include "MYCharacterBase.h"
+#include "MYShootEmUpGameMode.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/DecalComponent.h"
@@ -101,13 +102,22 @@ void AMYPawn::BeginPlay()
 		}
 	}	
 	
-	ChangeLeader();	
+	ChangeLeader();
+	OnGrenadeChanged.Broadcast(CurrentGrenadeCount, MaxGrenadeCount);
+
+	if(GrenadeToSpawn)
+	{
+		if(const auto Grenade = Cast<AGrenadeBase>(GrenadeToSpawn->GetDefaultObject()))
+		{
+			GrenadeEffectRadius = Grenade->GetEffectRadius();
+		}	
+	}	
 }
 
 // Called every frame
 void AMYPawn::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime);	
 
 	FVector MouseWorldPos;
 	FVector MouseWorldDir;
@@ -299,6 +309,7 @@ void AMYPawn::ThrowGrenade()
 	if(!GrenadeToSpawn) return;
 
 	CurrentGrenadeCount--;
+	OnGrenadeChanged.Broadcast(CurrentGrenadeCount,MaxGrenadeCount);
 	
 	StopSlowMoTimer();
 	
@@ -308,7 +319,7 @@ void AMYPawn::ThrowGrenade()
 	{
 		FVector EndPos = SpringArm->GetComponentLocation();
 		EndPos.Z = 0.0f;
-		const TArray<FVector> GrenadePathPositions{CalculateGrenadePath(GetActorLocation(),EndPos)};		
+		const TArray GrenadePathPositions{CalculateGrenadePath(GetActorLocation(),EndPos)};		
 		
 		Grenade->MoveToDestination(GrenadePathPositions);
 	}
@@ -344,7 +355,7 @@ void AMYPawn::VisualizeGrenadeTrajectory(const FVector StartPos, const FVector E
 		DrawDebugLine(GetWorld(),Pos1,Pos2,FColor::Red);
 	}
 	
-	DrawDebugCircle(GetWorld(),EndPos,300,32,FColor::Blue,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
+	DrawDebugCircle(GetWorld(),EndPos,GrenadeEffectRadius,32,FColor::Red,false,-1,0,2,FVector::ForwardVector,FVector::RightVector);
 }
 
 TArray<FVector> AMYPawn::CalculateGrenadePath(const FVector StartPos, const FVector EndPos) const
@@ -400,8 +411,22 @@ void AMYPawn::MemberDeath(bool bIsLeaderDead)
 
 		UGameplayStatics::SetGlobalTimeDilation(this,0.0f);
 
-		// Notify GM to load game over level
+		OnAllMembersDead.Broadcast();
+
+		PrimaryActorTick.bCanEverTick = false;
+
+		// Notify GM that all members are dead
+		if(const auto GM = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(this)))
+		{
+			GM->GameOver();
+		}
 	}
+}
+
+void AMYPawn::GrenadePickedUp()
+{
+	CurrentGrenadeCount = FMath::Min(CurrentGrenadeCount + 1, MaxGrenadeCount);
+	OnGrenadeChanged.Broadcast(CurrentGrenadeCount, MaxGrenadeCount);
 }
 
 void AMYPawn::ChangeLeader()

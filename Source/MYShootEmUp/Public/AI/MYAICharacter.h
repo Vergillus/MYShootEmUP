@@ -35,5 +35,9 @@ protected:
 	virtual void OnDeath();
 
 	UFUNCTION(BlueprintCallable)
-	void SetTarget(AActor* NewTarget);	
+	void SetTarget(AActor* NewTarget);
+
+	void IncreaseKillCount(bool bCanIncrease);
+
+	bool bIsKilledByPlayer;
 };

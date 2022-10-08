@@ -89,7 +89,7 @@ void AMYCharacterBase::OnDeathHandler()
 
 void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)
 {
-	UE_LOG(LogTemp,Warning,TEXT("EQUIP WEAPON"));
+	//UE_LOG(LogTemp,Warning,TEXT("EQUIP WEAPON"));
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Owner = this;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

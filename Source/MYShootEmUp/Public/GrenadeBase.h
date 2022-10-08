@@ -52,6 +52,8 @@ public:
 	virtual void Explode();
 
 	UFUNCTION(BlueprintCallable)
-	void MoveToDestination(const TArray<FVector>& FollowPathPositions);	
+	void MoveToDestination(const TArray<FVector>& FollowPathPositions);
+
+	FORCEINLINE float GetEffectRadius() const { return EffectRadius;}
 
 };

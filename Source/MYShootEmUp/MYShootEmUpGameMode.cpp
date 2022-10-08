@@ -9,7 +9,8 @@
 #include "UObject/ConstructorHelpers.h"
 
 AMYShootEmUpGameMode::AMYShootEmUpGameMode() :
-	SpawnTimerInterval(2.0f)
+	SpawnTimerInterval(2.0f),
+	KillCount(0)
 {
 	// use our custom PlayerController class
 	PlayerControllerClass = AMYShootEmUpPlayerController::StaticClass();
@@ -70,4 +71,9 @@ TSubclassOf<ABasePickUp> AMYShootEmUpGameMode::GetRandomPickUp()
 	const int32 RndIndex = FMath::RandRange(0, PickUpList.Num() - 1);
 
 	return PickUpList[RndIndex];
+}
+
+void AMYShootEmUpGameMode::GameOver()
+{
+	GetWorldTimerManager().ClearTimer(SpawnBotTimerHandle);
 }

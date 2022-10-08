@@ -17,6 +17,8 @@ class AMYCharacterBase;
 class UCurveFloat;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeaderChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrenadeChanged, int, CurrentGrenadeCnt, int, MaxGrenadeCnt);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllMembersDead);
 
 UCLASS()
 class MYSHOOTEMUP_API AMYPawn : public APawn
@@ -125,6 +127,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category= "Grenade")
 	float CurrentGrenadeCount;
 
+	UPROPERTY(BlueprintReadOnly)
+	float GrenadeEffectRadius;
+
 #pragma endregion
 
 	bool bCanFire;
@@ -150,9 +155,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MemberDeath(bool bIsLeaderDead = false);
 
-	FORCEINLINE void GrenadePickedUp() { CurrentGrenadeCount = FMath::Min(CurrentGrenadeCount + 1, MaxGrenadeCount) ;}
+	UFUNCTION(BlueprintCallable)
+	void GrenadePickedUp();
 
-	
+	UPROPERTY(BlueprintAssignable)
 	FOnLeaderChanged OnLeaderChanged;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnGrenadeChanged OnGrenadeChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAllMembersDead OnAllMembersDead;
 };

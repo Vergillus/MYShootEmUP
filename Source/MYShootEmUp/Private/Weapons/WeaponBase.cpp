@@ -81,9 +81,9 @@ void AWeaponBase::LocateNHurtEnemy()
 void AWeaponBase::DiscardWeapon()
 {
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-	WeaponMesh->SetCollisionProfileName(FName("BlockAll"));	
+	WeaponMesh->SetCollisionProfileName(FName("Weapon"));	
 	WeaponMesh->SetSimulatePhysics(true);
-	const FVector Impulse = (GetActorForwardVector() + GetActorUpVector()) * 650.0f;	
+	const FVector Impulse = (GetActorForwardVector() + GetActorUpVector()) * 950.0f;	
 	WeaponMesh->AddImpulse(Impulse);	
 
 	SetLifeSpan(1.5f);

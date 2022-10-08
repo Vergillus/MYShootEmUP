@@ -15,7 +15,8 @@
 
 // Sets default values
 AMYAICharacter::AMYAICharacter() :
-	AttackRange(150)
+	AttackRange(150),
+	bIsKilledByPlayer(true)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -46,12 +47,7 @@ void AMYAICharacter::OnDeath()
 	if(const AAIController* AIC = Cast<AAIController>(GetController()))
 	{
 		AIC->GetBrainComponent()->StopLogic("Killed");
-	}
-
-	if(const auto GameMode = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(this)))
-	{
-		GameMode->IncreaseKillCount();
-	}
+	}	
 
 	// Ragdoll
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
@@ -60,7 +56,9 @@ void AMYAICharacter::OnDeath()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
 
-	GetMesh()->SetSimulatePhysics(true);	
+	GetMesh()->SetSimulatePhysics(true);
+
+	IncreaseKillCount(bIsKilledByPlayer);
 			
 	// set Lifespan
 	SetLifeSpan(2.0f);
@@ -71,5 +69,13 @@ void AMYAICharacter::SetTarget(AActor* NewTarget)
 	if (AAIController* AICont = Cast<AAIController>(GetController()))
 	{	
 		AICont->GetBlackboardComponent()->SetValueAsObject("TargetActor", NewTarget);
+	}
+}
+
+void AMYAICharacter::IncreaseKillCount(bool bCanIncrease)
+{
+	if(const auto GameMode = Cast<AMYShootEmUpGameMode>(UGameplayStatics::GetGameMode(this)))
+	{
+		GameMode->IncreaseKillCount();
 	}
 }
