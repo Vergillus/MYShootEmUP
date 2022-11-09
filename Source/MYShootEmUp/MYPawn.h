@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Public/GrenadeBase.h"
+#include "Helper.h"
 #include "MYPawn.generated.h"
 
 class UFloatingPawnMovement;
@@ -15,6 +15,9 @@ class AMYCharacterBase;
 class UHealthComponent;
 class AMYCharacterBase;
 class UCurveFloat;
+class USquadFormationData;
+class USquadMembersData;
+class AGrenadeBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeaderChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrenadeChanged, int, CurrentGrenadeCnt, int, MaxGrenadeCnt);
@@ -33,7 +36,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
+#pragma region Components
 	UPROPERTY(EditAnywhere, Category= "Movement")
 	UFloatingPawnMovement* PawnMovementComp;
 
@@ -48,7 +51,7 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UDecalComponent* DecalComponent;
-
+	
 	/* We do not rotate the root component so we rotate this components to rotate squad */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Movement")
 	USceneComponent* RotParentByMouse;
@@ -57,7 +60,17 @@ protected:
 	USceneComponent* SquadParent;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<UStaticMeshComponent*> SquadMemberPositions;
+	TArray<USceneComponent*> SquadMemberPositions;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Squad Data")
+	TArray<USquadFormationData*> SquadFormationData;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Squad Data")
+    USquadMembersData* SquadMembersData; 
+
+#pragma endregion
+
+	TArray<AMYCharacterBase*> SquadMembers;
 
 #pragma region Movement Related Functions
 
@@ -135,15 +148,20 @@ protected:
 	bool bCanFire;
 	
 	void StartFire();
-	void EndFire();
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<UChildActorComponent*> SquadMembers;
+	void EndFire();	
 
 	int AliveMembersCount;
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeLeader();	
+	void ChangeLeader();
+
+	UPROPERTY(BlueprintReadOnly)
+	ESquadFormationType CurrentFormationType;
+
+	UFUNCTION(BlueprintCallable)
+	void ChangeFormation();
+
+	void InitializeSquad();
 	
 public:	
 	// Called every frame

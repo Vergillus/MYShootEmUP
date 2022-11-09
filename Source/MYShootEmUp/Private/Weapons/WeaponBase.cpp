@@ -32,12 +32,7 @@ void AWeaponBase::FireWeapon()
 {
 	if(!bCanFire) return;
 
-	if (MuzzleFlashNiagaraSystem)
-	{
-		const FTransform MuzzleSocketTransform{WeaponMesh->GetSocketTransform(MuzzleSocketName)};
-		
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this,MuzzleFlashNiagaraSystem,MuzzleSocketTransform.GetLocation(), MuzzleSocketTransform.Rotator());		
-	}
+	PlayMuzzleFlash();
 
 	bCanFire =false;	
 

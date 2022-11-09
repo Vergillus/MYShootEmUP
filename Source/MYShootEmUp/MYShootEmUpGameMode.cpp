@@ -10,7 +10,8 @@
 
 AMYShootEmUpGameMode::AMYShootEmUpGameMode() :
 	SpawnTimerInterval(2.0f),
-	KillCount(0)
+	KillCount(0),
+	bCanSpawnBots(true)
 {
 	// use our custom PlayerController class
 	PlayerControllerClass = AMYShootEmUpPlayerController::StaticClass();
@@ -34,7 +35,10 @@ void AMYShootEmUpGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(SpawnBotTimerHandle, this, &AMYShootEmUpGameMode::SpawnBotTimerElapsed, SpawnTimerInterval,true);
+	if(bCanSpawnBots)
+	{
+		GetWorldTimerManager().SetTimer(SpawnBotTimerHandle, this, &AMYShootEmUpGameMode::SpawnBotTimerElapsed, SpawnTimerInterval,true);		
+	}
 }
 
 void AMYShootEmUpGameMode::SpawnBotTimerElapsed()

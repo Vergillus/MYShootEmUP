@@ -13,7 +13,8 @@
 // Sets default values
 AMYCharacterBase::AMYCharacterBase() :
 	WeaponSocketName("hand_r_WeaponSocket"),
-	bIsLeader(false)
+	bIsLeader(false),
+	bIsSoloMode(false)
 
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -144,6 +145,11 @@ void AMYCharacterBase::CalculateWeaponPosition()
 void AMYCharacterBase::OnLeaderChangedHandler()
 {
 	bIsLeader = RootComponent->ComponentHasTag(FName("Leader"));
+}
+
+void AMYCharacterBase::SetVelocity_Implementation(const FVector NewVelocity)
+{
+	GetMovementComponent()->Velocity = NewVelocity;
 }
 
 void AMYCharacterBase::SubscribeToLeaderChange(FOnLeaderChanged& LeaderChanged)

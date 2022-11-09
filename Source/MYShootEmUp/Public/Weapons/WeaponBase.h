@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Item.h"
+#include "Helper.h"
+#include "MYProjectileBase.h"
 #include "WeaponBase.generated.h"
 
-class UNiagaraSystem;
+class UNiagaraComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMagazineEmpty);
 
@@ -60,12 +61,7 @@ protected:
 
 	/* Sound to play when fire */
 	UPROPERTY(EditDefaultsOnly, Category= "VFX")
-	USoundBase* WeaponFireSound;
-
-	UPROPERTY(EditDefaultsOnly, Category= "VFX")
-	UNiagaraSystem* MuzzleFlashNiagaraSystem;
-
-	
+	USoundBase* WeaponFireSound;		
 	
 	FTimerHandle CooldownTimerHandle;
 	
@@ -81,6 +77,9 @@ protected:
 	virtual void LocateNHurtEnemy();
 
 	void DecreaseMagazineCapacity();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void PlayMuzzleFlash();
 
 public:
 

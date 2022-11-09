@@ -50,6 +50,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsLeader;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsSoloMode;
+
 	UFUNCTION()
 	void OnLeaderChangedHandler();	
 
@@ -66,6 +69,15 @@ public:
 	void EquipWeapon(const TSubclassOf<AWeaponBase> Weapon);
 
 	FORCEINLINE AWeaponBase* GetCurrentWeapon() const {return CurrentWeapon;}
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsSoloMode() const
+	{
+		return bIsSoloMode;
+	}
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetVelocity(const FVector NewVelocity);	
 
 	void SubscribeToLeaderChange(FOnLeaderChanged& LeaderChanged);
 

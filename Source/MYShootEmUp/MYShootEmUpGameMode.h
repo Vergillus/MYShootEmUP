@@ -45,6 +45,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	int KillCount;
 
+	UPROPERTY(EditAnywhere, Category= "Debug")
+	bool bCanSpawnBots;
+
 public:
 
 	UFUNCTION(BlueprintCallable)

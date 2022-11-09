@@ -5,12 +5,16 @@
 
 #include "MYCharacterBase.h"
 #include "MYShootEmUpGameMode.h"
+#include "SquadFormationData.h"
+#include "SquadMembersData.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/DecalComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Drone.h"
+#include "Public/GrenadeBase.h" 
 
 #include "Kismet/KismetMathLibrary.h"
 
@@ -25,7 +29,8 @@ AMYPawn::AMYPawn() :
 	MaxGrenadeThrowDistance(1500),
 	MaxGrenadeCount(5),
 	CurrentGrenadeCount(MaxGrenadeCount),
-	bCanFire(false)
+	bCanFire(false),
+	CurrentFormationType(ESquadFormationType::ESF_BackToBack)
 
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -56,33 +61,33 @@ AMYPawn::AMYPawn() :
 	SquadParent = CreateDefaultSubobject<USceneComponent>(TEXT("Squad Parent"));
 	SquadParent->SetupAttachment(RotParentByMouse);	
 
-	constexpr int SquadMemberCnt = 4;
-	
-	FString SocketName{};
-    for (int i = 0; i < SquadMemberCnt; ++i)
-    {
-    	SocketName = "Pos_" + FString::FromInt(i);
-        if (UStaticMeshComponent* SceneComp = CreateDefaultSubobject<UStaticMeshComponent>(FName(*SocketName)))
-        {
-	        SceneComp->SetupAttachment(SquadParent);
-        	SceneComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        	SquadMemberPositions.Add(SceneComp);
-        }
-    }	
+	// constexpr int SquadMemberCnt = 5;
+	//
+	// FString SocketName{};
+ //    for (int i = 0; i < SquadMemberCnt; ++i)
+ //    {
+ //    	SocketName = "Pos_" + FString::FromInt(i + 1);
+ //        if (UStaticMeshComponent* SceneComp = CreateDefaultSubobject<UStaticMeshComponent>(FName(*SocketName)))
+ //        {
+	//         SceneComp->SetupAttachment(SquadParent);
+ //        	SceneComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+ //        	SquadMemberPositions.Add(SceneComp);
+ //        }
+ //    }	
 
-    for (int i = 0; i < SquadMemberCnt; ++i)
-    {
-    	SocketName = "Character_" + FString::FromInt(i);
-	    if (UChildActorComponent* ChildActorComponent = CreateDefaultSubobject<UChildActorComponent>(FName(*SocketName)))
-	    {
-	    	ChildActorComponent->SetupAttachment(SquadMemberPositions[i]);
-	    	ChildActorComponent->SetUsingAbsoluteScale(true);	 
-	    	ChildActorComponent->SetRelativeLocation(FVector::UpVector * 90);
-	    	ChildActorComponent->CreateChildActor();    	
-
-	    	SquadMembers.Add(ChildActorComponent);
-	    }
-    }
+    // for (int i = 0; i < SquadMemberCnt; ++i)
+    // {
+    // 	SocketName = "Character_" + FString::FromInt(i);
+	   //  if (UChildActorComponent* ChildActorComponent = CreateDefaultSubobject<UChildActorComponent>(FName(*SocketName)))
+	   //  {
+	   //  	ChildActorComponent->SetupAttachment(SquadMemberPositions[i]);
+	   //  	ChildActorComponent->SetUsingAbsoluteScale(true);	 
+	   //  	ChildActorComponent->SetRelativeLocation(FVector::UpVector * 90);
+	   //  	ChildActorComponent->CreateChildActor();    	
+    //
+	   //  	SquadMembers.Add(ChildActorComponent);
+	   //  }
+    // }
 
 	PawnMovementComp = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement Comp"));
 }
@@ -92,19 +97,22 @@ void AMYPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
+	InitializeSquad();
+	
+	
 	AliveMembersCount = SquadMembers.Num();
-
+	
 	for (const auto SquadMember : SquadMembers)
 	{
-		if(const auto Member = Cast<AMYCharacterBase>(SquadMember->GetChildActor()))
+		if(SquadMember)
 		{
-			Member->SubscribeToLeaderChange(OnLeaderChanged);
+			SquadMember->SubscribeToLeaderChange(OnLeaderChanged);			
 		}
 	}	
 	
 	ChangeLeader();
 	OnGrenadeChanged.Broadcast(CurrentGrenadeCount, MaxGrenadeCount);
-
+	
 	if(GrenadeToSpawn)
 	{
 		if(const auto Grenade = Cast<AGrenadeBase>(GrenadeToSpawn->GetDefaultObject()))
@@ -112,8 +120,8 @@ void AMYPawn::BeginPlay()
 			GrenadeEffectRadius = Grenade->GetEffectRadius();
 		}	
 	}	
-}
 
+}
 // Called every frame
 void AMYPawn::Tick(float DeltaTime)
 {
@@ -158,9 +166,9 @@ void AMYPawn::Tick(float DeltaTime)
 
 	if (bCanFire)
 	{
-		for (const auto ChildActorComponent : SquadMembers)
+		for (const auto SquadMember : SquadMembers)
 		{
-			if(const auto SquadMember = Cast<AMYCharacterBase>(ChildActorComponent->GetChildActor()))
+			if(SquadMember)
 			{				
 				SquadMember->Fire();
 			}
@@ -183,6 +191,8 @@ void AMYPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMYPawn::StartFire);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &AMYPawn::EndFire);
 
+	PlayerInputComponent->BindAction("ChangeSquadFormation", IE_Pressed, this, &AMYPawn::ChangeFormation);
+
 }
 
 #pragma region Movement Functions
@@ -200,7 +210,15 @@ void AMYPawn::MoveForwardBack(float AxisVal)
 	}
 	else
 	{
-		PawnMovementComp->AddInputVector(CameraForward * AxisVal);		
+		PawnMovementComp->AddInputVector(CameraForward * AxisVal);
+
+		for (const auto Member : SquadMembers)
+		{
+			if(Member)
+			{
+				Member->SetVelocity(PawnMovementComp->Velocity);
+			}
+		}
 	}
 	
 }
@@ -223,6 +241,7 @@ void AMYPawn::MoveLeftRight(float AxisVal)
 
 void AMYPawn::RotateSquadMembers()
 {
+	if(CurrentFormationType != ESquadFormationType::ESF_BackToBack) return;
 	if(!bCanRotateCharacters || bCanThrowGrenade) return;
 
 	bCanRotateCharacters = false;
@@ -443,18 +462,117 @@ void AMYPawn::ChangeLeader()
 		PreviousLeaderIndex = SquadMembers.Num() - 1;
 	}
 
-	if (USceneComponent* PrevLeaderRoot = SquadMembers[PreviousLeaderIndex]->GetChildActor()->GetRootComponent())
-	{
-		PrevLeaderRoot->ComponentTags.Empty();
-	}
 
-	if (USceneComponent* CurrLeaderRoot = SquadMembers[CurrentLeaderIndex]->GetChildActor()->GetRootComponent())
+	if (SquadMembers[PreviousLeaderIndex] != nullptr)
 	{
-		CurrLeaderRoot->ComponentTags.Add(FName("Leader"));
-		OnLeaderChanged.Broadcast();
+		if (USceneComponent* PrevLeaderRoot = SquadMembers[PreviousLeaderIndex]->GetRootComponent())
+		{
+			PrevLeaderRoot->ComponentTags.Empty();			
+		}
 	}
+	if (SquadMembers[CurrentLeaderIndex] != nullptr)
+	{
+		if (USceneComponent* CurrLeaderRoot = SquadMembers[CurrentLeaderIndex]->GetRootComponent())
+		{
+			CurrLeaderRoot->ComponentTags.Add(FName("Leader"));
+			OnLeaderChanged.Broadcast();
+		}		
+	}	
 	else
 	{
 		ChangeLeader();
 	}	
 }
+
+void AMYPawn::ChangeFormation()
+{
+	if(const APlayerController* PC = UGameplayStatics::GetPlayerController(this,0))
+	{
+		if(PC->IsInputKeyDown(EKeys::One))
+		{
+			CurrentFormationType = ESquadFormationType::ESF_BackToBack;
+		}
+		else if (PC->IsInputKeyDown(EKeys::Two))
+		{
+			CurrentFormationType = ESquadFormationType::ESF_LineH;
+		}
+		else if (PC->IsInputKeyDown(EKeys::Three))
+		{
+			CurrentFormationType = ESquadFormationType::ESF_LineV;
+		}
+
+		TArray<FVector> FormationPositions;
+		TArray<FRotator> FormationRotations;
+
+		for (const auto FormationData : SquadFormationData)
+		{
+			if (FormationData->FormationType == CurrentFormationType)
+			{
+				FormationPositions = FormationData->FormationPositions;
+				FormationRotations = FormationData->FormationRotations;
+			}
+		}
+
+		for (int i = 0; i < FormationPositions.Num() - 1; ++i)
+		{
+			// SquadMemberPositions[i]->SetRelativeLocation(FormationPositions[i]);
+			// SquadMemberPositions[i]->SetRelativeRotation(FormationRotations[i]);
+			if(!SquadMembers[i]) continue;
+
+			SquadMembers[i]->SetActorRelativeLocation(FormationPositions[i]);
+			SquadMembers[i]->SetActorRelativeRotation(FormationRotations[i]);
+			
+		}
+	}
+}
+
+void AMYPawn::InitializeSquad()
+{
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	const FAttachmentTransformRules AttachmentTransformRules{EAttachmentRule::KeepRelative,EAttachmentRule::KeepRelative,EAttachmentRule::KeepWorld, true};
+
+	const int ChildPosCount = SquadParent->GetNumChildrenComponents();
+
+	SquadParent->GetChildrenComponents(false,SquadMemberPositions);
+	
+	for (int i = 0; i < ChildPosCount; ++i)
+	{
+		FVector Pos = SquadFormationData[0]->FormationPositions[i];
+		const FRotator Rot = SquadFormationData[0]->FormationRotations[i];
+
+		FTransform Transform{Rot,Pos,FVector::OneVector * 0.1f};
+		
+		SquadParent->GetChildComponent(i)->SetRelativeTransform(Transform);
+		
+		if(i <= 3) // Spawn squad members
+		{
+			if (AMYCharacterBase* Character = GetWorld()->SpawnActor<AMYCharacterBase>(
+				SquadMembersData->SquadMembers[i], SpawnParameters))
+			{
+				Character->AttachToComponent(SquadParent, FAttachmentTransformRules::KeepRelativeTransform);
+
+				//Pos.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+
+				Character->SetActorRelativeLocation(Pos);
+				Character->SetActorRotation(Rot);
+
+				SquadMembers.Add(Character);
+			}
+		}
+		else // Spawn Drone
+		{
+			if (AActor* Drone = GetWorld()->SpawnActor<AActor>(SquadMembersData->Drone, SpawnParameters))
+			{
+				Drone->AttachToComponent(SquadParent, FAttachmentTransformRules::KeepRelativeTransform);
+
+				Drone->SetActorRelativeLocation(Pos);
+				Drone->SetActorRotation(Rot);
+			}
+		}
+		//DrawDebugCapsule(GetWorld(),SquadParent->GetChildComponent(i)->GetComponentLocation(),96,30,FQuat{FVector::UpVector,90}, FColor::Cyan, true, 10); 
+	}	
+}
+
+
