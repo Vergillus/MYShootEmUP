@@ -8,6 +8,7 @@
 
 class FOnLeaderChanged;
 class UHealthComponent;
+class AWeaponBase;
 
 UCLASS()
 class MYSHOOTEMUP_API AMYCharacterBase : public ACharacter
@@ -20,19 +21,23 @@ public:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
-	UHealthComponent* HealthComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
-	UChildActorComponent* DefaultWeapon;
+	UHealthComponent* HealthComponent;	
 
 protected:
+
+	virtual void PostInitializeComponents() override;
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite , Category="Weapon")
+	TSubclassOf<AWeaponBase> DefaultWeaponToSpawn;
+
+	UPROPERTY(BlueprintReadOnly)
+	AWeaponBase* DefaultWeapon;
 
 	UPROPERTY(BlueprintReadWrite)
-	class AWeaponBase* CurrentWeapon;
+	AWeaponBase* CurrentWeapon;
 
 	UPROPERTY(EditDefaultsOnly, Category= "Weapon")
 	FName WeaponSocketName;
@@ -44,9 +49,6 @@ protected:
 	UFUNCTION()
 	void DiscardWeapon();
 
-	UFUNCTION(BlueprintCallable)
-	void CalculateWeaponPosition();
-
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsLeader;
 
@@ -54,7 +56,10 @@ protected:
 	bool bIsSoloMode;
 
 	UFUNCTION()
-	void OnLeaderChangedHandler();	
+	void OnLeaderChangedHandler();
+
+	UFUNCTION(BlueprintCallable)
+	AWeaponBase* SpawnDefaultWeapon() const;	
 
 public:	
 	// Called every frame
@@ -67,6 +72,7 @@ public:
 	void Fire();
 
 	void EquipWeapon(const TSubclassOf<AWeaponBase> Weapon);
+	void EquipWeapon(AWeaponBase* WeaponToEquip);
 
 	FORCEINLINE AWeaponBase* GetCurrentWeapon() const {return CurrentWeapon;}
 

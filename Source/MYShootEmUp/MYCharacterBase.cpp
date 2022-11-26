@@ -6,8 +6,10 @@
 #include "HealthComponent.h"
 #include "MYPawn.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Weapons/WeaponBase.h"
 
 // Sets default values
@@ -21,23 +23,21 @@ AMYCharacterBase::AMYCharacterBase() :
 	PrimaryActorTick.bCanEverTick = true;
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Comp"));
-	HealthComponent->OnDeath.AddDynamic(this,&AMYCharacterBase::OnDeathHandler);
+	HealthComponent->OnDeath.AddDynamic(this,&AMYCharacterBase::OnDeathHandler);	
+}
 
-	DefaultWeapon = CreateDefaultSubobject<UChildActorComponent>(TEXT("Default Weapon"));
-	DefaultWeapon->SetupAttachment(GetMesh(),WeaponSocketName);
+void AMYCharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// Spawn and equip default weapon	
+	EquipWeapon(SpawnDefaultWeapon()); 
 }
 
 // Called when the game starts or when spawned
 void AMYCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if(AWeaponBase* Weapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor()))
-	{
-		CurrentWeapon = Weapon;
-		CurrentWeapon->SetIsDefaultWeapon(true);
-		CurrentWeapon->SetOwner(this);
-	}
 }
 
 // Called every frame
@@ -94,25 +94,45 @@ void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Owner = this;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	const AWeaponBase* DefWeapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor());
-	if(DefWeapon && DefWeapon != CurrentWeapon)
+	
+	if(DefaultWeapon && DefaultWeapon != CurrentWeapon)
 	{
 		DiscardWeapon();
 	}
 	
 	if (AWeaponBase* NewWeapon = GetWorld()->SpawnActor<AWeaponBase>(Weapon,SpawnParameters))
-	{
-		const FAttachmentTransformRules AttachmentTransformRules{EAttachmentRule::KeepWorld, EAttachmentRule::SnapToTarget,EAttachmentRule::KeepWorld,true};
-		NewWeapon->AttachToComponent(GetMesh(),AttachmentTransformRules,WeaponSocketName);
+	{	
+		if (const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(WeaponSocketName))
+		{
+			HandSocket->AttachActor(NewWeapon, GetMesh());
+
+			const FVector SocketLoc = NewWeapon->GetWeaponMesh()->GetSocketLocation(FName("GripPoint"));			
+			NewWeapon->SetActorRelativeLocation(NewWeapon->GetActorLocation() - SocketLoc);
+		}
+
+		//DefaultWeapon->SetHidden(true);
+		DefaultWeapon->GetWeaponMesh()->SetVisibility(false, true);
+		CurrentWeapon = NewWeapon;	
 		
-		DefaultWeapon->SetVisibility(false, true);
-		CurrentWeapon = NewWeapon;
-		
-		CurrentWeapon->SetActorRelativeLocation(FVector::Zero());
 		CurrentWeapon->OnMagazineEmpty.AddDynamic(this,&AMYCharacterBase::DiscardWeapon);
-		
-		CalculateWeaponPosition();
+	}
+}
+
+void AMYCharacterBase::EquipWeapon(AWeaponBase* WeaponToEquip)
+{
+	if (WeaponToEquip)
+	{
+		// Get Hand Socket
+		if (const USkeletalMeshSocket* HandSocket = GetMesh()->GetSocketByName(WeaponSocketName))
+		{
+			HandSocket->AttachActor(WeaponToEquip,GetMesh());
+
+			const FVector SocketLoc = WeaponToEquip->GetWeaponMesh()->GetSocketLocation(FName("GripPoint"));			
+			WeaponToEquip->SetActorRelativeLocation(WeaponToEquip->GetActorLocation() - SocketLoc);
+		}
+
+		CurrentWeapon = WeaponToEquip;
+		DefaultWeapon = CurrentWeapon;
 	}
 }
 
@@ -124,27 +144,26 @@ void AMYCharacterBase::DiscardWeapon()
 
 	CurrentWeapon->DiscardWeapon();	
 	
-	if(AWeaponBase* Weapon = Cast<AWeaponBase>(DefaultWeapon->GetChildActor()))
+	if(DefaultWeapon)
 	{
-		CurrentWeapon = Weapon;
-		DefaultWeapon->SetVisibility(true, true);
+		CurrentWeapon = DefaultWeapon;
+		//DefaultWeapon->SetHidden(false);
+		DefaultWeapon->GetWeaponMesh()->SetVisibility(true, true);		
 	}	
-}
-
-void AMYCharacterBase::CalculateWeaponPosition()
-{
-	if(!CurrentWeapon) return;	
-	
-	const FVector WeaponGripPos = CurrentWeapon->GetWeaponMesh()->GetSocketLocation(FName("GripPoint"));
-
-	const FVector NewPos = CurrentWeapon->GetActorLocation() - WeaponGripPos;	
-
-	CurrentWeapon->SetActorRelativeLocation(NewPos);	
 }
 
 void AMYCharacterBase::OnLeaderChangedHandler()
 {
 	bIsLeader = RootComponent->ComponentHasTag(FName("Leader"));
+}
+
+AWeaponBase* AMYCharacterBase::SpawnDefaultWeapon() const 
+{
+	if (DefaultWeaponToSpawn)
+	{
+		return GetWorld()->SpawnActor<AWeaponBase>(DefaultWeaponToSpawn);		
+	}
+	return nullptr;
 }
 
 void AMYCharacterBase::SetVelocity_Implementation(const FVector NewVelocity)
