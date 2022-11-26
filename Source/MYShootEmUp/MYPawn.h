@@ -18,6 +18,7 @@ class UCurveFloat;
 class USquadFormationData;
 class USquadMembersData;
 class AGrenadeBase;
+class ADrone;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeaderChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGrenadeChanged, int, CurrentGrenadeCnt, int, MaxGrenadeCnt);
@@ -71,6 +72,7 @@ protected:
 #pragma endregion
 
 	TArray<AMYCharacterBase*> SquadMembers;
+	ADrone* Drone;
 
 #pragma region Movement Related Functions
 

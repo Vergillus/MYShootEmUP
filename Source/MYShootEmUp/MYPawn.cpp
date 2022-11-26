@@ -523,6 +523,12 @@ void AMYPawn::ChangeFormation()
 			SquadMembers[i]->SetActorRelativeRotation(FormationRotations[i]);
 			
 		}
+
+		if(Drone)
+		{
+			Drone->SetActorRelativeLocation(FormationPositions.Last());			
+		}
+
 	}
 }
 
@@ -551,6 +557,7 @@ void AMYPawn::InitializeSquad()
 			if (AMYCharacterBase* Character = GetWorld()->SpawnActor<AMYCharacterBase>(
 				SquadMembersData->SquadMembers[i], SpawnParameters))
 			{
+				Character->SetMemberIndex(i);
 				Character->AttachToComponent(SquadParent, FAttachmentTransformRules::KeepRelativeTransform);
 
 				//Pos.Z += Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -563,7 +570,8 @@ void AMYPawn::InitializeSquad()
 		}
 		else // Spawn Drone
 		{
-			if (AActor* Drone = GetWorld()->SpawnActor<AActor>(SquadMembersData->Drone, SpawnParameters))
+			Drone = GetWorld()->SpawnActor<ADrone>(SquadMembersData->Drone, SpawnParameters);
+			if (Drone)
 			{
 				Drone->AttachToComponent(SquadParent, FAttachmentTransformRules::KeepRelativeTransform);
 

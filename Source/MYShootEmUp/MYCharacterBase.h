@@ -59,7 +59,9 @@ protected:
 	void OnLeaderChangedHandler();
 
 	UFUNCTION(BlueprintCallable)
-	AWeaponBase* SpawnDefaultWeapon() const;	
+	AWeaponBase* SpawnDefaultWeapon() const;
+
+	uint8 SquadMemberIndex;
 
 public:	
 	// Called every frame
@@ -80,6 +82,17 @@ public:
 	FORCEINLINE bool GetIsSoloMode() const
 	{
 		return bIsSoloMode;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE uint8 GetMemberIndex() const
+	{
+		return SquadMemberIndex;
+	}
+
+	FORCEINLINE void SetMemberIndex(uint8 Index)
+	{
+		SquadMemberIndex = Index;
 	}
 
 	UFUNCTION(BlueprintNativeEvent)
