@@ -91,6 +91,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE EWeaponType GetWeaponType() const {return WeaponType;}
+
+	FORCEINLINE float GetFireRange() const {return FireRange;}
+	FORCEINLINE float GetSweepRadius() const {return SweepRadius;}
 	
 	/* Called when this weapon deemed to be discarded */
 	virtual void DiscardWeapon();

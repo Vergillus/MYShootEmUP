@@ -6,6 +6,7 @@
 #include "HealthComponent.h"
 #include "MYPawn.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/DecalComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,7 +24,14 @@ AMYCharacterBase::AMYCharacterBase() :
 	PrimaryActorTick.bCanEverTick = true;
 
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Comp"));
-	HealthComponent->OnDeath.AddDynamic(this,&AMYCharacterBase::OnDeathHandler);	
+	HealthComponent->OnDeath.AddDynamic(this,&AMYCharacterBase::OnDeathHandler);
+
+	LineOfSightParent = CreateDefaultSubobject<USceneComponent>(TEXT("Line of Sight Parent"));
+	LineOfSightParent->SetupAttachment(RootComponent);
+
+	LineOfSightDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Line of Sight"));
+	LineOfSightDecal->SetupAttachment(LineOfSightParent);
+	LineOfSightDecal->DecalSize = FVector(128,100,10);
 }
 
 void AMYCharacterBase::PostInitializeComponents()
@@ -31,13 +39,17 @@ void AMYCharacterBase::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	// Spawn and equip default weapon	
-	EquipWeapon(SpawnDefaultWeapon()); 
+	EquipWeapon(SpawnDefaultWeapon());	
 }
 
 // Called when the game starts or when spawned
 void AMYCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	const FVector NewScale{CurrentWeapon->GetFireRange() / LineOfSightDecal->DecalSize.X,
+						   (CurrentWeapon->GetSweepRadius() / LineOfSightDecal->DecalSize.Y) * 2.0f,1};
+	LineOfSightParent->SetWorldScale3D(NewScale); 
 }
 
 // Called every frame
@@ -115,6 +127,10 @@ void AMYCharacterBase::EquipWeapon(const TSubclassOf<AWeaponBase> Weapon)
 		CurrentWeapon = NewWeapon;	
 		
 		CurrentWeapon->OnMagazineEmpty.AddDynamic(this,&AMYCharacterBase::DiscardWeapon);
+
+		const FVector NewScale{CurrentWeapon->GetFireRange() / LineOfSightDecal->DecalSize.X,
+						   (CurrentWeapon->GetSweepRadius() / LineOfSightDecal->DecalSize.Y) * 2.0f,1};
+		LineOfSightParent->SetWorldScale3D(NewScale); 
 	}
 }
 
@@ -132,7 +148,7 @@ void AMYCharacterBase::EquipWeapon(AWeaponBase* WeaponToEquip)
 		}
 
 		CurrentWeapon = WeaponToEquip;
-		DefaultWeapon = CurrentWeapon;
+		DefaultWeapon = CurrentWeapon;		
 	}
 }
 
@@ -157,11 +173,13 @@ void AMYCharacterBase::OnLeaderChangedHandler()
 	bIsLeader = RootComponent->ComponentHasTag(FName("Leader"));
 }
 
-AWeaponBase* AMYCharacterBase::SpawnDefaultWeapon() const 
+AWeaponBase* AMYCharacterBase::SpawnDefaultWeapon() 
 {
 	if (DefaultWeaponToSpawn)
 	{
-		return GetWorld()->SpawnActor<AWeaponBase>(DefaultWeaponToSpawn);		
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Owner = this;
+		return GetWorld()->SpawnActor<AWeaponBase>(DefaultWeaponToSpawn,SpawnParameters);		
 	}
 	return nullptr;
 }

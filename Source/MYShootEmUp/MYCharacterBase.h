@@ -21,7 +21,13 @@ public:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
-	UHealthComponent* HealthComponent;	
+	UHealthComponent* HealthComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> LineOfSightParent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Components", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UDecalComponent> LineOfSightDecal;
 
 protected:
 
@@ -59,7 +65,7 @@ protected:
 	void OnLeaderChangedHandler();
 
 	UFUNCTION(BlueprintCallable)
-	AWeaponBase* SpawnDefaultWeapon() const;
+	AWeaponBase* SpawnDefaultWeapon();
 
 	uint8 SquadMemberIndex;
 

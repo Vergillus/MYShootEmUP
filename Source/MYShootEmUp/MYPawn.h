@@ -34,8 +34,9 @@ public:
 	AMYPawn();
 
 protected:
+	virtual void PostInitializeComponents() override;
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual void BeginPlay() override;	
 
 #pragma region Components
 	UPROPERTY(EditAnywhere, Category= "Movement")
@@ -67,11 +68,17 @@ protected:
 	TArray<USquadFormationData*> SquadFormationData;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Squad Data")
-    USquadMembersData* SquadMembersData; 
+    USquadMembersData* SquadMembersData;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category= "Squad Leader")
+	USceneComponent* LeaderIndicatorParent;
 
 #pragma endregion
 
+	UPROPERTY(BlueprintReadOnly)
 	TArray<AMYCharacterBase*> SquadMembers;
+
+	UPROPERTY(BlueprintReadOnly)
 	ADrone* Drone;
 
 #pragma region Movement Related Functions

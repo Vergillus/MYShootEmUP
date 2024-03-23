@@ -59,46 +59,25 @@ AMYPawn::AMYPawn() :
 	RotParentByMouse->SetupAttachment(RootComponent);
 
 	SquadParent = CreateDefaultSubobject<USceneComponent>(TEXT("Squad Parent"));
-	SquadParent->SetupAttachment(RotParentByMouse);	
+	SquadParent->SetupAttachment(RotParentByMouse);
 
-	// constexpr int SquadMemberCnt = 5;
-	//
-	// FString SocketName{};
- //    for (int i = 0; i < SquadMemberCnt; ++i)
- //    {
- //    	SocketName = "Pos_" + FString::FromInt(i + 1);
- //        if (UStaticMeshComponent* SceneComp = CreateDefaultSubobject<UStaticMeshComponent>(FName(*SocketName)))
- //        {
-	//         SceneComp->SetupAttachment(SquadParent);
- //        	SceneComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
- //        	SquadMemberPositions.Add(SceneComp);
- //        }
- //    }	
-
-    // for (int i = 0; i < SquadMemberCnt; ++i)
-    // {
-    // 	SocketName = "Character_" + FString::FromInt(i);
-	   //  if (UChildActorComponent* ChildActorComponent = CreateDefaultSubobject<UChildActorComponent>(FName(*SocketName)))
-	   //  {
-	   //  	ChildActorComponent->SetupAttachment(SquadMemberPositions[i]);
-	   //  	ChildActorComponent->SetUsingAbsoluteScale(true);	 
-	   //  	ChildActorComponent->SetRelativeLocation(FVector::UpVector * 90);
-	   //  	ChildActorComponent->CreateChildActor();    	
-    //
-	   //  	SquadMembers.Add(ChildActorComponent);
-	   //  }
-    // }
+	LeaderIndicatorParent = CreateDefaultSubobject<USceneComponent>(TEXT("Leader Indicator Parent"));
+	LeaderIndicatorParent->SetupAttachment(RootComponent);
 
 	PawnMovementComp = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement Comp"));
+}
+
+void AMYPawn::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
+	InitializeSquad();
 }
 
 // Called when the game starts or when spawned
 void AMYPawn::BeginPlay()
 {
 	Super::BeginPlay();
-
-	InitializeSquad();
-	
 	
 	AliveMembersCount = SquadMembers.Num();
 	
@@ -241,20 +220,28 @@ void AMYPawn::MoveLeftRight(float AxisVal)
 
 void AMYPawn::RotateSquadMembers()
 {
-	if(CurrentFormationType != ESquadFormationType::ESF_BackToBack) return;
-	if(!bCanRotateCharacters || bCanThrowGrenade) return;
+	if(CurrentFormationType == ESquadFormationType::ESF_BackToBack)
+	{
+		if(!bCanRotateCharacters || bCanThrowGrenade) return;
 
-	bCanRotateCharacters = false;
+		bCanRotateCharacters = false;
 
-	CharacterRotLerpVal = 0.0f;
+		CharacterRotLerpVal = 0.0f;
 
-	const FRotator CurrentRot = SquadParent->GetRelativeRotation();
-	const FRotator DesiredRot = UKismetMathLibrary::ComposeRotators(CurrentRot,FRotator(0,90,0));
-	
-	FTimerDelegate TimerDelegate;
-	TimerDelegate.BindUFunction(this,FName("RotateSquadInTime"),CharacterRotationDuration, CurrentRot, DesiredRot);
+		const FRotator CurrentRot = SquadParent->GetRelativeRotation();
+		const FRotator DesiredRot = UKismetMathLibrary::ComposeRotators(CurrentRot,FRotator(0,90,0));
+		
+		FTimerDelegate TimerDelegate;
+		TimerDelegate.BindUFunction(this,FName("RotateSquadInTime"),CharacterRotationDuration, CurrentRot, DesiredRot);
 
-	GetWorldTimerManager().SetTimer(CharacterRotationTimerHandle, TimerDelegate, GetWorld()->DeltaTimeSeconds,true);
+		LeaderIndicatorParent->AttachToComponent(RootComponent,FAttachmentTransformRules::KeepWorldTransform);
+		
+		GetWorldTimerManager().SetTimer(CharacterRotationTimerHandle, TimerDelegate, GetWorld()->DeltaTimeSeconds,true);		
+	}
+	else
+	{
+		ChangeLeader();
+	}
 }
 
 void AMYPawn::RotateSquadInTime(const float Duration,const FRotator CurrentRot, const FRotator DesiredRot)
@@ -476,6 +463,8 @@ void AMYPawn::ChangeLeader()
 		{
 			CurrLeaderRoot->ComponentTags.Add(FName("Leader"));
 			OnLeaderChanged.Broadcast();
+
+			LeaderIndicatorParent->AttachToComponent(CurrLeaderRoot, FAttachmentTransformRules::SnapToTargetIncludingScale);			
 		}		
 	}	
 	else
@@ -486,6 +475,8 @@ void AMYPawn::ChangeLeader()
 
 void AMYPawn::ChangeFormation()
 {
+	if(!bCanRotateCharacters) return;
+	
 	if(const APlayerController* PC = UGameplayStatics::GetPlayerController(this,0))
 	{
 		if(PC->IsInputKeyDown(EKeys::One))
@@ -509,9 +500,13 @@ void AMYPawn::ChangeFormation()
 			if (FormationData->FormationType == CurrentFormationType)
 			{
 				FormationPositions = FormationData->FormationPositions;
-				FormationRotations = FormationData->FormationRotations;
+
+				if(CurrentFormationType == ESquadFormationType::ESF_BackToBack)
+				{
+					FormationRotations = FormationData->FormationRotations;					
+				}
 			}
-		}
+		}		
 
 		for (int i = 0; i < FormationPositions.Num() - 1; ++i)
 		{
@@ -520,8 +515,15 @@ void AMYPawn::ChangeFormation()
 			if(!SquadMembers[i]) continue;
 
 			SquadMembers[i]->SetActorRelativeLocation(FormationPositions[i]);
-			SquadMembers[i]->SetActorRelativeRotation(FormationRotations[i]);
-			
+
+			if(FormationRotations.Num() == 0)
+			{
+				SquadMembers[i]->SetActorRelativeRotation(FRotator::ZeroRotator);
+			}
+			else
+			{
+				SquadMembers[i]->SetActorRelativeRotation(FormationRotations[i]);							
+			}
 		}
 
 		if(Drone)
